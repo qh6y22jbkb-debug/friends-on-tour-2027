@@ -6,5 +6,5 @@ dist/
 
 # Alles wat geheim is blijft lokaal
 secret/*
-!secret/reveal.example.json
-!secret/README.md
+!secret/content.example.json
+!secret/hints.example.json

@@ -1,14 +1,16 @@
-// Operatie Mysterieweekend – de kluis.
-// Deze Worker is de enige plek waar de geheime data (REVEAL_B64) leeft.
-// Hij geeft die pas vrij als de SERVERtijd voorbij het onthullingsmoment is,
-// of als de organisator zijn geheime code meestuurt.
+// Friends on Tour 2027 – de server.
+// Alle geheime inhoud (CONTENT_B64, HINTS_B64) leeft alleen hier. De server controleert
+// naam, sessie, rol, tegelwachtwoord en servertijd voordat er iets geheims terug gaat.
 
-import spelers from '../src/data/spelers.json'
-import quiz from '../src/data/quiz.json'
-import { ONTHULLING_ISO } from '../src/data/moment.js'
+import { DEELNEMERS, ONTHULLING_ISO } from '../src/config.js'
+import paklijst from '../src/data/paklijst.json'
 
 const ONTHULLING_MS = Date.parse(ONTHULLING_ISO)
-const MAX_FOTO_BYTES = 1_500_000
+const PBKDF2_RONDES = 100_000
+const SESSIE_DUUR_MS = 1000 * 60 * 60 * 24 * 180
+const MAX_POGINGEN = 8
+const POGING_VENSTER_S = 15 * 60
+const PAKLIJST_IDS = new Set(paklijst.flatMap((g) => g.items.map((i) => i.id)))
 
 export default {
   async fetch(request, env) {
@@ -17,16 +19,23 @@ export default {
     try {
       return await api(request, env, url)
     } catch (e) {
-      if (e instanceof Antwoord) return e.response
-      return json({ fout: 'Er ging iets mis in de kluis.' }, 500)
+      if (e instanceof Stop) return e.response
+      console.error(e)
+      return json({ fout: 'Er ging iets mis op de server.' }, 500)
     }
   },
 }
 
-class Antwoord {
-  constructor(response) { this.response = response }
+/* ---------- hulpjes ---------- */
+
+class Stop {
+  constructor(response) {
+    this.response = response
+  }
 }
-const stop = (fout, status = 400) => { throw new Antwoord(json({ fout }, status)) }
+const stop = (fout, status = 400, extra = {}) => {
+  throw new Stop(json({ fout, ...extra }, status))
+}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -35,216 +44,252 @@ function json(data, status = 200) {
   })
 }
 
+const enc = new TextEncoder()
+const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+const b64url = (bytes) => btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+const vanB64url = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0))
+
 async function sha256(tekst) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(tekst))
-  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+  return hex(await crypto.subtle.digest('SHA-256', enc.encode(tekst)))
 }
 
-// REVEAL_B64 = base64 van secret/reveal.json (UTF-8), geüpload als Worker-secret.
-function leesGeheim(env) {
-  const bytes = Uint8Array.from(atob(env.REVEAL_B64), (c) => c.charCodeAt(0))
-  return JSON.parse(new TextDecoder().decode(bytes))
+// Vergelijkt zonder vroeg te stoppen, zodat de duur niets verraadt.
+function gelijk(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false
+  let verschil = 0
+  for (let i = 0; i < a.length; i++) verschil |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return verschil === 0
+}
+
+async function pbkdf2(wachtwoord, saltHex) {
+  const sleutel = await crypto.subtle.importKey('raw', enc.encode(wachtwoord), 'PBKDF2', false, ['deriveBits'])
+  const salt = Uint8Array.from(saltHex.match(/../g), (h) => parseInt(h, 16))
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PBKDF2_RONDES }, sleutel, 256)
+  return hex(bits)
+}
+
+async function hmac(env, tekst) {
+  if (!env.SESSIE_GEHEIM) throw new Error('SESSIE_GEHEIM ontbreekt')
+  const sleutel = await crypto.subtle.importKey('raw', enc.encode(env.SESSIE_GEHEIM), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  return b64url(new Uint8Array(await crypto.subtle.sign('HMAC', sleutel, enc.encode(tekst))))
+}
+
+// De sessie bevat een stukje van de salt: na een reset (nieuwe salt) zijn oude sessies ongeldig.
+async function maakSessie(env, naam, salt) {
+  const kern = b64url(enc.encode(JSON.stringify({ n: naam, v: salt.slice(0, 8), exp: Date.now() + SESSIE_DUUR_MS })))
+  return kern + '.' + (await hmac(env, kern))
+}
+
+async function leesSessie(request, env) {
+  const token = (request.headers.get('authorization') || '').replace(/^Bearer /, '')
+  const [kern, handtekening] = token.split('.')
+  if (!kern || !handtekening || !gelijk(handtekening, await hmac(env, kern))) stop('Log opnieuw in.', 401)
+  const { n, v, exp } = JSON.parse(new TextDecoder().decode(vanB64url(kern)))
+  if (Date.now() > exp) stop('Je sessie is verlopen. Log opnieuw in.', 401)
+  const persoon = DEELNEMERS.find((d) => d.naam === n)
+  if (!persoon) stop('Log opnieuw in.', 401)
+  // Een gereset wachtwoord maakt oude sessies ongeldig.
+  const opgeslagen = await lees(env, 'gebruiker:' + n, null)
+  if (!opgeslagen || opgeslagen.salt.slice(0, 8) !== v) stop('Log opnieuw in.', 401)
+  return persoon
+}
+
+function geheim(env, naam) {
+  if (!env[naam]) return null
+  return JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(env[naam]), (c) => c.charCodeAt(0))))
 }
 
 function nu(env) {
-  // Alleen lokaal (.dev.vars) kun je de servertijd verzetten om het slot te testen.
+  // Testmodus: alleen lokaal (.dev.vars) kan de servertijd verzet worden.
   if (env.DEV === '1' && env.NU_OVERRIDE) return Date.parse(env.NU_OVERRIDE)
   return Date.now()
 }
 
-async function isOrganisator(request, env) {
-  const code = request.headers.get('x-org')
-  if (!code || !env.ORG_HASH) return false
-  return (await sha256('omw-org:' + code.trim())) === env.ORG_HASH
-}
-
-async function checkGroep(request, env) {
-  if (!env.GROEP_HASH) return // geen groepscode ingesteld = open
-  const code = request.headers.get('x-groep') || ''
-  if ((await sha256('omw-groep:' + code.trim().toLowerCase())) !== env.GROEP_HASH) {
-    stop('Onbekende agent. Toegangscode klopt niet.', 401)
-  }
-}
-
-function checkNaam(naam) {
-  if (!spelers.includes(naam)) stop('Die agent kennen we niet.')
-  return naam
-}
-
-const tekst = (v, max) => String(v ?? '').trim().slice(0, max)
-
-// Per vraag: telt het vaste antwoord uit quiz.json, of anders wat de meerderheid koos.
-function quizScores(ingevuld) {
-  const deelnemers = Object.entries(ingevuld)
-  const goed = quiz.vragen.map((v, i) => {
-    if (v.antwoord) return new Set([v.antwoord])
-    const telling = {}
-    for (const [, d] of deelnemers) telling[d.antwoorden[i]] = (telling[d.antwoorden[i]] || 0) + 1
-    const hoogste = Math.max(0, ...Object.values(telling))
-    return new Set(Object.keys(telling).filter((k) => telling[k] === hoogste))
-  })
-  const scores = {}
-  for (const [naam, d] of deelnemers) {
-    scores[naam] = { score: d.antwoorden.filter((a, i) => goed[i].has(a)).length, max: quiz.vragen.length }
-  }
-  return scores
+function datumAmsterdam(ms) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date(ms))
 }
 
 async function lees(env, sleutel, standaard) {
   return (await env.DATA.get(sleutel, 'json')) ?? standaard
 }
 const schrijf = (env, sleutel, waarde) => env.DATA.put(sleutel, JSON.stringify(waarde))
+const tekst = (v, max) => String(v ?? '').trim().slice(0, max)
+
+// Beperkt het aantal foute pogingen per naam (inloggen en tegels apart).
+async function telPoging(env, soort, naam) {
+  const sleutel = `pogingen:${soort}:${naam}`
+  const aantal = Number(await env.DATA.get(sleutel)) || 0
+  if (aantal >= MAX_POGINGEN) stop('Te veel pogingen. Probeer het over een kwartier opnieuw.', 429)
+  return {
+    fout: () => env.DATA.put(sleutel, String(aantal + 1), { expirationTtl: POGING_VENSTER_S }),
+    goed: () => (aantal ? env.DATA.delete(sleutel) : null),
+  }
+}
+
+/* ---------- routes ---------- */
 
 async function api(request, env, url) {
   const pad = url.pathname.replace(/\/+$/, '')
   const methode = request.method
   const tijd = nu(env)
-  const org = await isOrganisator(request, env)
-  const open = tijd >= ONTHULLING_MS || org
+  const onthuld = tijd >= ONTHULLING_MS
+  const body = methode === 'POST' ? await request.json().catch(() => ({})) : {}
+
+  /* --- zonder sessie --- */
 
   if (pad === '/api/tijd') return json({ nu: tijd, onthulling: ONTHULLING_MS })
 
-  await checkGroep(request, env)
-  const body = methode === 'POST' ? await request.json().catch(() => ({})) : {}
+  if (pad === '/api/gebruiker') {
+    const naam = url.searchParams.get('naam')
+    if (!DEELNEMERS.some((d) => d.naam === naam)) stop('Onbekende naam.', 404)
+    return json({ heeftWachtwoord: Boolean(await env.DATA.get('gebruiker:' + naam)) })
+  }
+
+  if (pad === '/api/registreer' && methode === 'POST') {
+    const persoon = DEELNEMERS.find((d) => d.naam === body.naam)
+    if (!persoon) stop('Onbekende naam.')
+    const wachtwoord = String(body.wachtwoord || '')
+    if (wachtwoord.length < 6) stop('Kies een wachtwoord van minstens 6 tekens.')
+    if (await env.DATA.get('gebruiker:' + persoon.naam)) stop('Voor deze naam bestaat al een wachtwoord.', 409)
+    const salt = hex(crypto.getRandomValues(new Uint8Array(16)))
+    await schrijf(env, 'gebruiker:' + persoon.naam, { salt, hash: await pbkdf2(wachtwoord, salt) })
+    return json({ token: await maakSessie(env, persoon.naam, salt), naam: persoon.naam, rol: persoon.rol })
+  }
+
+  if (pad === '/api/login' && methode === 'POST') {
+    const persoon = DEELNEMERS.find((d) => d.naam === body.naam)
+    if (!persoon) stop('Onbekende naam.')
+    const poging = await telPoging(env, 'login', persoon.naam)
+    const opgeslagen = await lees(env, 'gebruiker:' + persoon.naam, null)
+    if (!opgeslagen) stop('Maak eerst een wachtwoord aan.', 409)
+    if (!gelijk(await pbkdf2(String(body.wachtwoord || ''), opgeslagen.salt), opgeslagen.hash)) {
+      await poging.fout()
+      stop('Wachtwoord klopt niet.', 403)
+    }
+    await poging.goed()
+    return json({ token: await maakSessie(env, persoon.naam, opgeslagen.salt), naam: persoon.naam, rol: persoon.rol })
+  }
+
+  /* --- met sessie --- */
+
+  const ik = await leesSessie(request, env)
+  const isOrg = ik.rol === 'organisator'
+  const inhoud = geheim(env, 'CONTENT_B64')
 
   switch (pad) {
-    case '/api/aanmelden':
-      return json({ ok: true, organisator: org })
-
-    case '/api/onthulling': {
-      if (!open) return json({ open: false })
-      if (!env.REVEAL_B64) return json({ open: true, data: null, fout: 'Geen geheime data geüpload.' })
-      return json({ open: true, preview: tijd < ONTHULLING_MS, data: leesGeheim(env) })
+    case '/api/start': {
+      // Alleen wat iedereen mag zien: datums van de dagen, geen inhoud.
+      return json({
+        naam: ik.naam,
+        rol: ik.rol,
+        onthuld,
+        dagen: (inhoud?.dagen ?? []).map((d) => ({ id: d.id, datum: d.datum })),
+      })
     }
 
-    case '/api/gokken': {
-      const gokken = await lees(env, 'gokken', {})
-      if (methode === 'POST') {
-        if (tijd >= ONTHULLING_MS) stop('Te laat, agent. De enveloppe is al open.')
-        const naam = checkNaam(body.naam)
-        if (gokken[naam]) stop('Jouw gok staat al vast. Geen gesjoemel!', 409)
-        const lat = Number(body.lat), lon = Number(body.lon)
-        gokken[naam] = {
-          tekst: tekst(body.tekst, 80),
-          land: tekst(body.land, 60),
-          lat: Number.isFinite(lat) ? lat : null,
-          lon: Number.isFinite(lon) ? lon : null,
-          tijd,
+    case '/api/tegel': {
+      if (!inhoud) stop('De geheime inhoud is nog niet geüpload.', 503)
+      const id = String(body.id || '')
+      const dag = inhoud.dagen.find((d) => d.id === id)
+      if (id !== 'bestemming' && id !== 'praktisch' && !dag) stop('Onbekende tegel.', 404)
+
+      if (!isOrg) {
+        if ((id === 'bestemming' || id === 'praktisch') && !onthuld) {
+          stop('Opent op 28 april 2027 om 00:00.', 423)
         }
-        await schrijf(env, 'gokken', gokken)
+        if (id !== 'praktisch') {
+          const poging = await telPoging(env, 'tegel', ik.naam)
+          const verwacht = inhoud.wachtwoorden?.[id]
+          const gegeven = await sha256(`fot-tegel:${id}:${String(body.wachtwoord || '').trim().toLowerCase()}`)
+          if (!verwacht || !gelijk(gegeven, verwacht)) {
+            await poging.fout()
+            stop('Wachtwoord klopt niet.', 403)
+          }
+          await poging.goed()
+        }
       }
-      // Voor de onthulling verraden we alleen WIE er gegokt heeft, niet WAT.
-      if (!open) return json({ open: false, ingeleverd: Object.keys(gokken) })
-      return json({ open: true, gokken })
+
+      if (id === 'bestemming') return json({ inhoud: inhoud.bestemming })
+      if (id === 'praktisch') return json({ inhoud: inhoud.praktisch })
+      return json({ inhoud: dag })
     }
 
-    case '/api/kas': {
-      const kas = await lees(env, 'kas', { betaald: {}, uitgaven: [] })
+    case '/api/organisatie': {
+      if (!isOrg) stop('Alleen voor organisatoren.', 403)
+      if (!inhoud) stop('De geheime inhoud is nog niet geüpload.', 503)
+      const status = await lees(env, 'afgevinkt', {})
       if (methode === 'POST') {
-        if (body.actie === 'betaald') {
-          kas.betaald[checkNaam(body.naam)] = Boolean(body.waarde)
-        } else if (body.actie === 'uitgave') {
-          const bedrag = Math.round(Number(body.bedrag) * 100) / 100
-          if (!(bedrag > 0 && bedrag < 10000)) stop('Dat bedrag klopt niet.')
-          kas.uitgaven.push({
-            id: crypto.randomUUID(),
-            wie: checkNaam(body.wie),
-            wat: tekst(body.wat, 80) || 'Iets geheims',
-            bedrag,
-            tijd,
-          })
-        } else if (body.actie === 'verwijder') {
-          kas.uitgaven = kas.uitgaven.filter((u) => u.id !== body.id)
-        } else stop('Onbekende actie.')
-        await schrijf(env, 'kas', kas)
+        const id = String(body.id || '')
+        const bestaat = [...(inhoud.organisatie.boekingen ?? []), ...(inhoud.organisatie.actiepunten ?? [])].some((x) => x.id === id)
+        if (!bestaat) stop('Onbekend punt.')
+        if (body.klaar) status[id] = { door: ik.naam, tijd }
+        else delete status[id]
+        await schrijf(env, 'afgevinkt', status)
       }
-      return json(kas)
+      return json({ inhoud: inhoud.organisatie, status })
     }
 
-    case '/api/playlist': {
-      const lijst = await lees(env, 'playlist', {})
+    case '/api/paklijst': {
+      const sleutel = 'paklijst:' + ik.naam
+      let afgevinkt = await lees(env, sleutel, [])
       if (methode === 'POST') {
-        const naam = checkNaam(body.naam)
-        const titel = tekst(body.titel, 100)
-        if (!titel) stop('Een nummer zonder titel? Knap hoor.')
-        lijst[naam] = { titel, artiest: tekst(body.artiest, 100), link: tekst(body.link, 300), tijd }
-        await schrijf(env, 'playlist', lijst)
+        const id = String(body.id || '')
+        if (!PAKLIJST_IDS.has(id)) stop('Onbekend item.')
+        afgevinkt = body.klaar ? [...new Set([...afgevinkt, id])] : afgevinkt.filter((x) => x !== id)
+        await schrijf(env, sleutel, afgevinkt)
       }
-      return json(lijst)
+      return json({ afgevinkt })
     }
 
-    case '/api/quiz': {
-      const ingevuld = await lees(env, 'quiz', {})
-      if (methode === 'POST') {
-        const naam = checkNaam(body.naam)
-        if (ingevuld[naam]) stop('Je hebt de quiz al gedaan. Eén poging, agent.', 409)
-        const antwoorden = Array.isArray(body.antwoorden) ? body.antwoorden : []
-        if (antwoorden.length !== quiz.vragen.length) stop('Niet alle vragen beantwoord.')
-        ingevuld[naam] = { antwoorden: antwoorden.map((a) => checkNaam(a)), tijd }
-        await schrijf(env, 'quiz', ingevuld)
-      }
-      // Losse antwoorden blijven in de kluis; we geven alleen de scores terug.
-      return json({ ingevuld: Object.keys(ingevuld), scores: quizScores(ingevuld) })
-    }
-
-    // Takenlijst voor de organisatie: alleen met organisatorcode, want de taken verraden van alles.
-    case '/api/regelzaken': {
-      if (!org) stop('Alleen voor de organisatie.', 403)
-      let taken = await lees(env, 'regelzaken', null)
-      const nieuweLijst = !taken
-      if (nieuweLijst) {
-        const start = env.REVEAL_B64 ? leesGeheim(env).actiepunten ?? [] : []
-        taken = start.map((a) => ({ id: crypto.randomUUID(), tekst: a.tekst, wanneer: a.wanneer ?? '', klaar: false }))
-      }
+    case '/api/kosten': {
+      let uitgaven = await lees(env, 'kosten', [])
       if (methode === 'POST') {
         if (body.actie === 'toevoegen') {
-          const t = tekst(body.tekst, 200)
-          if (!t) stop('Een lege taak? Die is al klaar.')
-          taken.push({ id: crypto.randomUUID(), tekst: t, wanneer: tekst(body.wanneer, 40), klaar: false })
-        } else if (body.actie === 'afvinken') {
-          const taak = taken.find((t) => t.id === body.id)
-          if (taak) {
-            taak.klaar = Boolean(body.waarde)
-            taak.door = taak.klaar ? tekst(body.naam, 20) : undefined
+          const betaler = DEELNEMERS.find((d) => d.naam === body.betaler)
+          if (!betaler) stop('Kies wie er betaald heeft.')
+          const bedrag = Math.round(Number(body.bedrag) * 100) / 100
+          if (!(bedrag > 0 && bedrag < 100000)) stop('Vul een geldig bedrag in.')
+          const omschrijving = tekst(body.omschrijving, 80)
+          if (!omschrijving) stop('Vul een omschrijving in.')
+          uitgaven.push({ id: crypto.randomUUID(), betaler: betaler.naam, omschrijving, bedrag, door: ik.naam, tijd })
+        } else if (body.actie === 'verwijderen') {
+          const uitgave = uitgaven.find((u) => u.id === body.id)
+          if (!uitgave) stop('Uitgave niet gevonden.', 404)
+          if (!isOrg && uitgave.door !== ik.naam && uitgave.betaler !== ik.naam) {
+            stop('Alleen wie hem invoerde of een organisator kan dit verwijderen.', 403)
           }
-        } else if (body.actie === 'verwijder') {
-          taken = taken.filter((t) => t.id !== body.id)
+          uitgaven = uitgaven.filter((u) => u.id !== body.id)
         } else stop('Onbekende actie.')
+        await schrijf(env, 'kosten', uitgaven)
       }
-      if (methode === 'POST' || (nieuweLijst && taken.length)) await schrijf(env, 'regelzaken', taken)
-      return json(taken)
+      return json({ uitgaven })
     }
 
-    case '/api/fotos': {
-      if (!open) return json({ open: false, fotos: [] })
-      const fotos = await lees(env, 'fotos', [])
-      if (methode === 'POST') {
-        const naam = checkNaam(body.naam)
-        const data = String(body.data || '')
-        if (!data.startsWith('data:image/jpeg;base64,')) stop('Alleen foto\'s, agent.')
-        if (data.length > MAX_FOTO_BYTES) stop('Die foto is te groot.')
-        const id = crypto.randomUUID()
-        await env.DATA.put('foto:' + id, data)
-        fotos.unshift({ id, naam, onderschrift: tekst(body.onderschrift, 120), tijd })
-        await schrijf(env, 'fotos', fotos)
-      }
-      return json({ open: true, fotos })
+    case '/api/hints': {
+      const hints = geheim(env, 'HINTS_B64') ?? []
+      const vandaag = datumAmsterdam(tijd)
+      const open = hints.filter((h) => h.datum <= vandaag)
+      const volgende = hints.find((h) => h.datum > vandaag)
+      return json({ open: open.reverse(), volgende: volgende?.datum ?? null, totaal: hints.length })
     }
-  }
 
-  const fotoMatch = pad.match(/^\/api\/fotos\/([0-9a-f-]{36})$/)
-  if (fotoMatch) {
-    if (!open) stop('Nog even geduld.', 403)
-    if (methode === 'DELETE') {
-      const fotos = (await lees(env, 'fotos', [])).filter((f) => f.id !== fotoMatch[1])
-      await schrijf(env, 'fotos', fotos)
-      await env.DATA.delete('foto:' + fotoMatch[1])
+    case '/api/deelnemers': {
+      if (!isOrg) stop('Alleen voor organisatoren.', 403)
+      const lijst = await Promise.all(
+        DEELNEMERS.map(async (d) => ({ ...d, heeftWachtwoord: Boolean(await env.DATA.get('gebruiker:' + d.naam)) })),
+      )
+      return json({ deelnemers: lijst })
+    }
+
+    case '/api/reset': {
+      if (!isOrg) stop('Alleen voor organisatoren.', 403)
+      const doel = DEELNEMERS.find((d) => d.naam === body.naam)
+      if (!doel) stop('Onbekende naam.')
+      if (doel.naam === ik.naam) stop('Je kunt je eigen wachtwoord hier niet resetten.')
+      await env.DATA.delete('gebruiker:' + doel.naam)
       return json({ ok: true })
     }
-    const data = await env.DATA.get('foto:' + fotoMatch[1])
-    if (!data) stop('Foto niet gevonden.', 404)
-    return json({ data })
   }
 
-  return json({ fout: 'Dit pad bestaat niet. Of wel? 🕵️' }, 404)
+  return json({ fout: 'Onbekend adres.' }, 404)
 }

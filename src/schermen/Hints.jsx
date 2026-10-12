@@ -1,50 +1,42 @@
-import { useEffect } from 'react'
-import hints from '../data/hints.json'
-import { verdien } from '../lib/badges.js'
-import { datumAmsterdam, mooieDatum } from '../lib/tijd.js'
+import { useEffect, useState } from 'react'
+import { api } from '../lib/api.js'
+import { mooieDatum } from '../lib/tijd.js'
+import { Blok, Fout, Kop, Laden } from '../ui.jsx'
 
-export default function Hints({ nu }) {
-  const vandaag = datumAmsterdam(nu)
-  const open = hints.filter((h) => h.datum <= vandaag).reverse()
-  const volgende = hints.find((h) => h.datum > vandaag)
-  const dicht = hints.length - open.length
+export default function Hints({ terug }) {
+  const [hints, setHints] = useState(null)
+  const [fout, setFout] = useState('')
 
   useEffect(() => {
-    if (open.length >= 10) verdien('speurder')
-  }, [open.length])
+    api('hints').then(setHints).catch((e) => setFout(e.message))
+  }, [])
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="kop text-3xl">Cryptische hints</h1>
-        <p className="text-paars-300">
-          Om de paar dagen lekt er iets uit. Of het klopt? Daar zeggen we niks over.
-        </p>
-      </div>
-
-      {volgende && (
-        <div className="kaart flex items-center gap-3 border-dashed">
-          <span className="text-3xl">🔒</span>
-          <div>
-            <p className="label">Volgende hint</p>
-            <p className="font-semibold">{mooieDatum(volgende.datum)}</p>
-            <p className="text-xs text-paars-300">Nog {dicht} hints in de kluis</p>
-          </div>
-        </div>
+    <>
+      <Kop titel="Hints" sub="Of ze kloppen? Daar zeggen we niets over." terug={terug} />
+      <Fout>{fout}</Fout>
+      {!hints && !fout && <Laden />}
+      {hints && (
+        <>
+          {hints.volgende && (
+            <p className="mb-4 text-sm text-tekst-zacht">
+              Volgende hint op {mooieDatum(hints.volgende)} · nog {hints.totaal - hints.open.length} te gaan
+            </p>
+          )}
+          {hints.open.length === 0 ? (
+            <p className="text-tekst-zacht">Nog geen hints.</p>
+          ) : (
+            <Blok>
+              {hints.open.map((h, i) => (
+                <div key={h.datum + i} style={{ '--i': i }} className="opkomen border-b border-rand px-4 py-3 last:border-b-0">
+                  <p className="text-sm text-tekst-zacht">{mooieDatum(h.datum)}</p>
+                  <p>{h.tekst}</p>
+                </div>
+              ))}
+            </Blok>
+          )}
+        </>
       )}
-
-      {open.length === 0 && <p className="text-paars-300">Nog geen hints. Geduld is ook een agentenvaardigheid.</p>}
-
-      {open.map((h, i) => (
-        <article key={h.datum} className={`kaart binnenkomen ${i === 0 ? 'border-goud' : ''}`}>
-          <div className="flex items-center justify-between">
-            <span className="label">Hint #{hints.indexOf(h) + 1}</span>
-            <span className="text-xs text-paars-300">{mooieDatum(h.datum)}</span>
-          </div>
-          <p className="mt-2 font-typemachine text-lg leading-relaxed">{h.tekst}</p>
-          {i === 0 && <span className="stempel mt-3">Nieuw</span>}
-        </article>
-      ))}
-    </div>
+    </>
   )
 }

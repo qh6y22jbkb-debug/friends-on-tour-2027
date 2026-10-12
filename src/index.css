@@ -1,87 +1,165 @@
 @import 'tailwindcss';
 
+/* Kleuren als tokens; donkere modus volgt het systeem. */
+:root {
+  --achtergrond: #f6f6f4;
+  --vlak: #ffffff;
+  --vlak-zacht: #efefec;
+  --rand: #e3e3df;
+  --tekst: #1a1a19;
+  --tekst-zacht: #6b6b66;
+  --accent: #1d6b57;
+  --accent-zacht: #e3f0eb;
+  --op-accent: #ffffff;
+  --fout: #b4321f;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --achtergrond: #121413;
+    --vlak: #1a1d1b;
+    --vlak-zacht: #222624;
+    --rand: #2c302e;
+    --tekst: #ecedea;
+    --tekst-zacht: #9a9e99;
+    --accent: #5cbf9d;
+    --accent-zacht: #1d2f28;
+    --op-accent: #0d1a15;
+    --fout: #f08a76;
+    color-scheme: dark;
+  }
+}
+
 @theme {
-  --color-nacht: #0b0710;
-  --color-paars-950: #120a1e;
-  --color-paars-900: #1a0f2b;
-  --color-paars-800: #2a1846;
-  --color-paars-700: #3d2463;
-  --color-paars-300: #b9a6d6;
-  --color-goud: #d4a72c;
-  --color-goud-licht: #f5d68a;
-  --color-zegel: #7a1f3d;
-  --font-typemachine: 'Special Elite', 'Courier New', monospace;
-  --font-kop: 'Playfair Display', Georgia, serif;
-  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-achtergrond: var(--achtergrond);
+  --color-vlak: var(--vlak);
+  --color-vlak-zacht: var(--vlak-zacht);
+  --color-rand: var(--rand);
+  --color-tekst: var(--tekst);
+  --color-tekst-zacht: var(--tekst-zacht);
+  --color-accent: var(--accent);
+  --color-accent-zacht: var(--accent-zacht);
+  --color-op-accent: var(--op-accent);
+  --color-fout: var(--fout);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 html,
 body {
-  background: var(--color-nacht);
-  color: #ece6f5;
+  background: var(--achtergrond);
+  color: var(--tekst);
   -webkit-tap-highlight-color: transparent;
-  overscroll-behavior-y: none;
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background-image:
-    radial-gradient(circle at 20% 0%, rgba(61, 36, 99, 0.55), transparent 55%),
-    radial-gradient(circle at 100% 100%, rgba(122, 31, 61, 0.25), transparent 50%);
-  background-attachment: fixed;
-  min-height: 100dvh;
+/* ---------- Bewegingen: alleen transform en opacity ---------- */
+
+:root {
+  --uit: cubic-bezier(0.22, 1, 0.36, 1);
+  --veer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-@layer components {
-  .kaart {
-    @apply rounded-2xl border border-goud/25 bg-paars-900/80 p-4 shadow-lg shadow-black/40 backdrop-blur;
-  }
-  .knop {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-goud px-4 py-3 font-bold text-nacht transition active:scale-95 disabled:opacity-40;
-  }
-  .knop-stil {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-goud/40 px-4 py-2.5 font-semibold text-goud-licht transition active:scale-95 disabled:opacity-40;
-  }
-  .invoer {
-    @apply w-full rounded-xl border border-paars-700 bg-paars-950 px-3 py-3 text-base text-white placeholder:text-paars-300/50 focus:border-goud focus:outline-none;
-  }
-  .stempel {
-    @apply inline-block -rotate-6 rounded border-2 border-zegel px-2 py-0.5 font-typemachine text-xs tracking-widest text-[#e05a7e] uppercase;
-  }
-  .kop {
-    @apply font-kop text-2xl font-black text-goud-licht;
-  }
-  .label {
-    @apply font-typemachine text-xs tracking-[0.2em] text-goud uppercase;
-  }
+/* Schermwissel via View Transitions */
+::view-transition-old(root) {
+  animation: 180ms var(--uit) both vt-weg;
+}
+::view-transition-new(root) {
+  animation: 260ms var(--uit) both vt-in;
+}
+@keyframes vt-weg {
+  to { opacity: 0; }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(8px); }
 }
 
-@keyframes binnenkomen {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: none; }
+/* Terugval als View Transitions niet bestaan */
+.scherm-in {
+  animation: vt-in 260ms var(--uit) both;
 }
-.binnenkomen { animation: binnenkomen 0.35s ease-out both; }
 
-@keyframes schudden {
-  0%, 100% { transform: rotate(0); }
-  20% { transform: rotate(-4deg); }
-  40% { transform: rotate(4deg); }
-  60% { transform: rotate(-3deg); }
-  80% { transform: rotate(2deg); }
+/* Gespreide fade-up voor tegels en lijstitems (--i = volgnummer) */
+.opkomen {
+  animation: opkomen 320ms var(--uit) both;
+  animation-delay: calc(var(--i, 0) * 30ms);
 }
-.schudden { animation: schudden 0.6s ease-in-out infinite; }
+@keyframes opkomen {
+  from { opacity: 0; transform: translateY(8px); }
+}
 
-@keyframes flap {
-  from { transform: rotateX(0deg); }
-  to { transform: rotateX(180deg); }
+/* Rustige cijferovergang in de aftelklok */
+.cijfer {
+  display: inline-block;
+  animation: cijfer 300ms var(--uit) both;
 }
-.flap-open { animation: flap 0.7s ease-in forwards; transform-origin: top; }
+@keyframes cijfer {
+  from { opacity: 0; transform: translateY(-40%); }
+}
 
-@keyframes brief {
-  from { transform: translateY(0); }
-  to { transform: translateY(-70%); }
+/* Bottom sheet */
+.sheet-achter {
+  transition: opacity 240ms var(--uit);
 }
-.brief-uit { animation: brief 0.8s 0.6s ease-out forwards; }
+.sheet-paneel {
+  transition: transform 380ms var(--veer);
+}
+
+/* Fout wachtwoord */
+.schud {
+  animation: schud 320ms ease-in-out;
+}
+@keyframes schud {
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(2px); }
+}
+
+/* Afvinken: vinkje springt kort in, tekst wordt doorgehaald */
+.vinkje {
+  animation: vinkje 260ms var(--veer) both;
+}
+@keyframes vinkje {
+  from { opacity: 0; transform: scale(0.5); }
+}
+.doorhaal {
+  position: relative;
+  transition: opacity 220ms var(--uit);
+}
+.doorhaal::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 52%;
+  height: 1.5px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 260ms var(--uit);
+}
+.doorhaal[data-aan='true'] {
+  opacity: 0.5;
+}
+.doorhaal[data-aan='true']::after {
+  transform: scaleX(1);
+}
+
+/* Voortgangsbalk */
+.balk {
+  transform-origin: left;
+  transition: transform 600ms var(--uit);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .schudden, .binnenkomen { animation: none; }
+  *,
+  *::before,
+  *::after,
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
 }

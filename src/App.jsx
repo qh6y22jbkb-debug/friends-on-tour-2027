@@ -1,125 +1,221 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { House, CalendarDays, ListChecks, Ellipsis } from 'lucide-react'
 import { api } from './lib/api.js'
-import { lees, schrijf } from './lib/opslag.js'
+import { lees, schrijf, wis } from './lib/opslag.js'
+import { heeftViewTransitions, overgang } from './lib/overgang.js'
 import { ONTHULLING_MS, syncTijd, useNu } from './lib/tijd.js'
-import { BadgeMelding, Logo } from './onderdelen/Algemeen.jsx'
-import Aanmelden from './schermen/Aanmelden.jsx'
-import Basis from './schermen/Basis.jsx'
+import { Fout, Knop, Sheet, Veld } from './ui.jsx'
+import Login from './schermen/Login.jsx'
+import Start from './schermen/Start.jsx'
+import Programma, { Dag } from './schermen/Programma.jsx'
+import Paklijst from './schermen/Paklijst.jsx'
+import Meer from './schermen/Meer.jsx'
+import Bestemming from './schermen/Bestemming.jsx'
+import Kosten from './schermen/Kosten.jsx'
+import Organisatie from './schermen/Organisatie.jsx'
+import Praktisch from './schermen/Praktisch.jsx'
 import Hints from './schermen/Hints.jsx'
-import Spellen from './schermen/Spellen.jsx'
-import Groep from './schermen/Groep.jsx'
-import Dossier from './schermen/Dossier.jsx'
-import Enveloppe from './schermen/Enveloppe.jsx'
-import Instellingen from './schermen/Instellingen.jsx'
+import Deelnemers from './schermen/Deelnemers.jsx'
 
 const TABS = [
-  ['basis', '⏱️', 'Basis'],
-  ['hints', '🔎', 'Hints'],
-  ['spellen', '🎲', 'Spellen'],
-  ['groep', '👥', 'Groep'],
-  ['dossier', '📁', 'Dossier'],
+  ['start', 'Start', House],
+  ['programma', 'Programma', CalendarDays],
+  ['paklijst', 'Paklijst', ListChecks],
+  ['meer', 'Meer', Ellipsis],
 ]
 
 export default function App() {
-  const [naam, setNaam] = useState(() => lees('naam'))
-  const [tab, setTab] = useState(() => lees('tab', 'basis'))
-  const [onthulling, setOnthulling] = useState({ open: false })
-  const [enveloppe, setEnveloppe] = useState(false)
-  const [instellingen, setInstellingen] = useState(false)
-  const nu = useNu()
-  const tijdIsDaar = nu >= ONTHULLING_MS
+  const [sessie, setSessie] = useState(() => lees('sessie'))
+  const [start, setStart] = useState(null)
+  const [nav, setNav] = useState({ tab: 'start', scherm: null })
+  // Ontgrendelde inhoud blijft alleen in het geheugen, nooit in localStorage.
+  const [ontgrendeld, setOntgrendeld] = useState({})
+  const [slot, setSlot] = useState(null) // { id, titel, alleenMelding }
+  const nu = useNu(1000)
+  const onthuld = nu >= ONTHULLING_MS
 
   useEffect(() => {
     syncTijd()
     const id = setInterval(syncTijd, 10 * 60 * 1000)
-    return () => clearInterval(id)
-  }, [])
-
-  const haalOnthulling = useCallback(async () => {
-    try {
-      setOnthulling(await api('onthulling'))
-    } catch {
-      /* offline of nog geen toegang */
+    const uit = () => setSessie(null)
+    window.addEventListener('fot-uitgelogd', uit)
+    return () => {
+      clearInterval(id)
+      window.removeEventListener('fot-uitgelogd', uit)
     }
   }, [])
 
-  // Ophalen bij het opstarten, en opnieuw zodra de servertijd het moment passeert.
   useEffect(() => {
-    if (naam) haalOnthulling()
-  }, [naam, tijdIsDaar, haalOnthulling])
+    if (!sessie) return
+    api('start').then(setStart).catch(() => {})
+  }, [sessie, onthuld])
 
-  function kiesTab(t) {
-    setTab(t)
-    schrijf('tab', t)
-    window.scrollTo({ top: 0 })
+  const isOrg = sessie?.rol === 'organisator'
+
+  const ga = useCallback((wijziging) => {
+    overgang(() => {
+      setNav((n) => ({ ...n, ...wijziging }))
+      window.scrollTo(0, 0)
+    })
+  }, [])
+
+  // Haalt de inhoud van een tegel op; vraagt zo nodig eerst een wachtwoord.
+  const open = useCallback(
+    async (id, titel) => {
+      const naarScherm = () => ga({ scherm: id.startsWith('dag-') ? { soort: 'dag', id } : { soort: id } })
+      if (ontgrendeld[id]) return naarScherm()
+      const zonderWachtwoord = isOrg || id === 'praktisch'
+      const opTijd = id.startsWith('dag-') || onthuld || isOrg
+      if (!opTijd) return setSlot({ id, titel, alleenMelding: true })
+      if (!zonderWachtwoord) return setSlot({ id, titel })
+      try {
+        const { inhoud } = await api('tegel', { methode: 'POST', body: { id } })
+        setOntgrendeld((o) => ({ ...o, [id]: inhoud }))
+        naarScherm()
+      } catch (e) {
+        setSlot({ id, titel, alleenMelding: true, melding: e.message })
+      }
+    },
+    [ontgrendeld, isOrg, onthuld, ga],
+  )
+
+  function uitloggen() {
+    wis('sessie')
+    setSessie(null)
+    setStart(null)
+    setOntgrendeld({})
+    setNav({ tab: 'start', scherm: null })
   }
 
-  if (!naam) return <Aanmelden onKlaar={setNaam} />
+  if (!sessie) {
+    return (
+      <Login
+        onIngelogd={(s) => {
+          schrijf('sessie', s)
+          overgang(() => setSessie(s))
+        }}
+      />
+    )
+  }
 
-  const open = onthulling.open
-  const gedeeld = { naam, nu, open, onthulling, haalOnthulling }
+  const terug = () => ga({ scherm: null })
+  const gedeeld = { nu, onthuld, isOrg, sessie, start, open, ontgrendeld, ga, terug }
+  const s = nav.scherm
+
+  let inhoud
+  if (s?.soort === 'bestemming') inhoud = <Bestemming {...gedeeld} inhoud={ontgrendeld.bestemming} />
+  else if (s?.soort === 'dag') inhoud = <Dag {...gedeeld} dag={ontgrendeld[s.id]} />
+  else if (s?.soort === 'praktisch') inhoud = <Praktisch {...gedeeld} inhoud={ontgrendeld.praktisch} />
+  else if (s?.soort === 'kosten') inhoud = <Kosten {...gedeeld} />
+  else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} />
+  else if (s?.soort === 'hints') inhoud = <Hints {...gedeeld} />
+  else if (s?.soort === 'deelnemers') inhoud = <Deelnemers {...gedeeld} />
+  else if (nav.tab === 'start') inhoud = <Start {...gedeeld} />
+  else if (nav.tab === 'programma') inhoud = <Programma {...gedeeld} />
+  else if (nav.tab === 'paklijst') inhoud = <Paklijst {...gedeeld} />
+  else inhoud = <Meer {...gedeeld} onUitloggen={uitloggen} />
+
+  const sleutel = `${nav.tab}-${s?.soort ?? ''}-${s?.id ?? ''}`
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg pb-28">
-      <BadgeMelding />
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-goud/15 bg-nacht/85 px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3 backdrop-blur">
-        <Logo />
-        <button onClick={() => setInstellingen(true)} className="text-right" aria-label="Instellingen">
-          <span className="block font-typemachine text-[10px] tracking-[0.2em] text-paars-300">
-            {lees('orgcode') ? '🔑 ORGANISATIE' : 'AGENT'}
-          </span>
-          <span className="block font-bold text-goud-licht">{naam} ⚙️</span>
-        </button>
-      </header>
-
-      {onthulling.preview && (
-        <div className="bg-zegel px-4 py-1.5 text-center font-typemachine text-xs tracking-widest text-white">
-          ORGANISATOR-PREVIEW · alleen jij ziet dit
-        </div>
-      )}
-
-      <main className="px-4 pt-4">
-        {tab === 'basis' && <Basis {...gedeeld} onOpenEnveloppe={() => setEnveloppe(true)} />}
-        {tab === 'hints' && <Hints {...gedeeld} />}
-        {tab === 'spellen' && <Spellen {...gedeeld} />}
-        {tab === 'groep' && <Groep {...gedeeld} />}
-        {tab === 'dossier' && <Dossier {...gedeeld} onOpenEnveloppe={() => setEnveloppe(true)} />}
+    <div className="mx-auto min-h-dvh max-w-md px-4 pt-[max(env(safe-area-inset-top),1.5rem)] pb-28">
+      <main key={sleutel} className={heeftViewTransitions() ? '' : 'scherm-in'}>
+        {inhoud}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-goud/20 bg-paars-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
-        <div className="mx-auto flex max-w-lg">
-          {TABS.map(([id, emoji, label]) => (
-            <button
-              key={id}
-              onClick={() => kiesTab(id)}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-semibold transition ${
-                tab === id ? 'text-goud-licht' : 'text-paars-300/70'
-              }`}
-            >
-              <span className={`text-xl transition ${tab === id ? 'scale-110' : 'opacity-70 grayscale'}`}>{emoji}</span>
-              {label}
-            </button>
-          ))}
+      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-rand bg-vlak pb-[env(safe-area-inset-bottom)]">
+        <div className="mx-auto flex max-w-md">
+          {TABS.map(([id, label, Icoon]) => {
+            const actief = nav.tab === id && !s
+            return (
+              <button
+                key={id}
+                onClick={() => ga({ tab: id, scherm: null })}
+                aria-current={actief ? 'page' : undefined}
+                className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${
+                  nav.tab === id ? 'text-accent' : 'text-tekst-zacht'
+                }`}
+              >
+                <Icoon size={22} strokeWidth={nav.tab === id ? 2 : 1.75} />
+                {label}
+              </button>
+            )
+          })}
         </div>
       </nav>
 
-      {enveloppe && open && (
-        <Enveloppe
-          data={onthulling.data}
-          onKlaar={() => {
-            setEnveloppe(false)
-            schrijf('enveloppe-open', true)
-            kiesTab('dossier')
-          }}
-        />
-      )}
-      <Instellingen
-        open={instellingen}
-        onSluit={() => setInstellingen(false)}
-        naam={naam}
-        onUitloggen={() => setNaam(null)}
-        onOrgGewijzigd={haalOnthulling}
+      <SlotSheet
+        slot={slot}
+        onSluit={() => setSlot(null)}
+        onOpen={(id, data) => {
+          setOntgrendeld((o) => ({ ...o, [id]: data }))
+          setSlot(null)
+          ga({ scherm: id.startsWith('dag-') ? { soort: 'dag', id } : { soort: id } })
+        }}
       />
     </div>
+  )
+}
+
+function SlotSheet({ slot, onSluit, onOpen }) {
+  const [wachtwoord, setWachtwoord] = useState('')
+  const [fout, setFout] = useState('')
+  const [bezig, setBezig] = useState(false)
+  const [schud, setSchud] = useState(false)
+  const veld = useRef(null)
+
+  useEffect(() => {
+    setWachtwoord('')
+    setFout('')
+    if (slot && !slot.alleenMelding) setTimeout(() => veld.current?.focus(), 350)
+  }, [slot])
+
+  async function versturen(e) {
+    e.preventDefault()
+    setBezig(true)
+    setFout('')
+    try {
+      const { inhoud } = await api('tegel', { methode: 'POST', body: { id: slot.id, wachtwoord } })
+      onOpen(slot.id, inhoud)
+    } catch (err) {
+      setFout(err.message)
+      setSchud(false)
+      setTimeout(() => setSchud(true), 20)
+      setWachtwoord('')
+    } finally {
+      setBezig(false)
+    }
+  }
+
+  return (
+    <Sheet open={!!slot} onSluit={onSluit} titel={slot?.titel}>
+      {slot?.alleenMelding ? (
+        <>
+          <p className="text-tekst-zacht">{slot.melding ?? 'Dit onderdeel opent op 28 april 2027 om 00:00.'}</p>
+          <Knop className="mt-6 w-full" variant="rand" onClick={onSluit}>
+            Sluiten
+          </Knop>
+        </>
+      ) : (
+        <form onSubmit={versturen}>
+          <p className="mb-4 text-tekst-zacht">Vul het wachtwoord voor dit onderdeel in.</p>
+          <div className={schud ? 'schud' : ''} onAnimationEnd={() => setSchud(false)}>
+            <Veld
+              ref={veld}
+              type="password"
+              value={wachtwoord}
+              onChange={(e) => setWachtwoord(e.target.value)}
+              placeholder="Wachtwoord"
+              autoComplete="off"
+              autoCapitalize="none"
+            />
+          </div>
+          <Fout>{fout}</Fout>
+          <Knop className="mt-4 w-full" disabled={!wachtwoord || bezig}>
+            {bezig ? 'Controleren…' : 'Openen'}
+          </Knop>
+        </form>
+      )}
+    </Sheet>
   )
 }

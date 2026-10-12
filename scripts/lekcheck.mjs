@@ -1,6 +1,6 @@
 // Zoekt in de repo (en de build) naar woorden die de verrassing kunnen verraden.
 // De verboden woorden komen ALLEEN uit bestanden die niet in git staan:
-//   - secret/reveal.json   (bestemming, land, naam + adres verblijf)
+//   - secret/content.json  (plaats, regio, naam + adres verblijf)
 //   - secret/lekwoorden.txt (één woord per regel, zelf aanvullen: bezienswaardigheden, gerechten, vliegveldcode…)
 //   - --extra <bestand>    (optioneel nog een lijst)
 // Gebruik: npm run lekcheck            (hele repo + git-historie + dist)
@@ -22,14 +22,14 @@ function voegToe(w) {
   if (n.length >= 3) woorden.add(n)
 }
 
-if (fs.existsSync('secret/reveal.json')) {
-  const r = JSON.parse(fs.readFileSync('secret/reveal.json', 'utf8'))
-  voegToe(r.bestemming)
-  voegToe(r.land)
-  voegToe(r.verblijf?.naam)
-  // Alleen namen (met hoofdletter) uit het adres, geen gewone woorden als "centrum".
-  const ALGEMEEN = new Set(['centrum', 'straat', 'plein', 'appartement', 'hotel'])
-  for (const deel of String(r.verblijf?.adres || '').split(/[\s,()]+/)) {
+if (fs.existsSync('secret/content.json')) {
+  const c = JSON.parse(fs.readFileSync('secret/content.json', 'utf8'))
+  voegToe(c.bestemming?.plaats)
+  voegToe(c.praktisch?.adres?.naam)
+  // Alleen namen (met hoofdletter), geen gewone woorden als "centrum".
+  const ALGEMEEN = new Set(['centrum', 'straat', 'plein', 'appartement', 'hotel', 'precies', 'adres'])
+  const namen = `${c.bestemming?.regio || ''} ${c.praktisch?.adres?.adres || ''}`
+  for (const deel of namen.split(/[\s,()·]+/)) {
     if (deel.length >= 5 && /^\p{Lu}/u.test(deel) && !/\d/.test(deel) && !ALGEMEEN.has(normaal(deel))) voegToe(deel)
   }
 }
@@ -41,7 +41,7 @@ for (const lijst of ['secret/lekwoorden.txt', extra].filter(Boolean)) {
 }
 
 if (woorden.size === 0) {
-  console.warn('⚠️  Geen verboden woorden gevonden. Maak secret/reveal.json en/of secret/lekwoorden.txt aan.')
+  console.warn('⚠️  Geen verboden woorden gevonden. Maak secret/content.json en/of secret/lekwoorden.txt aan.')
   process.exit(0)
 }
 

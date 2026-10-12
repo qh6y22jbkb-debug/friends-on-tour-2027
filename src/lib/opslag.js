@@ -1,5 +1,5 @@
-// Kleine wrapper om localStorage: alleen voor dingen die per telefoon zijn.
-const PREFIX = 'omw:'
+// Kleine wrapper om localStorage. Bewaart alleen de sessie, nooit geheime inhoud.
+const PREFIX = 'fot:'
 
 export function lees(sleutel, standaard = null) {
   try {
@@ -14,7 +14,7 @@ export function schrijf(sleutel, waarde) {
   try {
     localStorage.setItem(PREFIX + sleutel, JSON.stringify(waarde))
   } catch {
-    /* privé-modus of vol: dan maar niet onthouden */
+    /* privé-modus of vol */
   }
 }
 

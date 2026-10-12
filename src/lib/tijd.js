@@ -1,30 +1,24 @@
 import { useEffect, useState } from 'react'
-import { ONTHULLING_ISO } from '../data/moment.js'
+import { ONTHULLING_ISO } from '../config.js'
 
 export const ONTHULLING_MS = Date.parse(ONTHULLING_ISO)
 
-// Verschil tussen de klok van de server en die van de telefoon.
-// Zo maakt het niet uit of iemand zijn telefoonklok verzet: we rekenen met servertijd.
+// Verschil tussen serverklok en telefoonklok; de aftelklok rekent met servertijd.
 let verschil = 0
-let gesynct = false
 const luisteraars = new Set()
 
 export async function syncTijd() {
   try {
     const start = Date.now()
-    const res = await fetch('/api/tijd', { cache: 'no-store' })
-    const { nu } = await res.json()
-    const rtt = Date.now() - start
-    verschil = nu + rtt / 2 - Date.now()
-    gesynct = true
+    const { nu } = await fetch('/api/tijd', { cache: 'no-store' }).then((r) => r.json())
+    verschil = nu + (Date.now() - start) / 2 - Date.now()
     luisteraars.forEach((f) => f())
   } catch {
-    /* offline: dan voorlopig de eigen klok */
+    /* offline: voorlopig de eigen klok */
   }
 }
 
 export const serverNu = () => Date.now() + verschil
-export const isGesynct = () => gesynct
 
 export function useNu(interval = 1000) {
   const [nu, setNu] = useState(serverNu)
@@ -41,23 +35,17 @@ export function useNu(interval = 1000) {
 }
 
 export function resterend(nu) {
-  const ms = Math.max(0, ONTHULLING_MS - nu)
-  const s = Math.floor(ms / 1000)
+  const s = Math.max(0, Math.floor((ONTHULLING_MS - nu) / 1000))
   return {
-    ms,
+    klaar: s === 0,
     dagen: Math.floor(s / 86400),
     uren: Math.floor((s % 86400) / 3600),
     minuten: Math.floor((s % 3600) / 60),
-    seconden: s % 60,
   }
 }
 
-// Datum (YYYY-MM-DD) in Amsterdamse tijd, voor hints die per dag openen.
-export function datumAmsterdam(ms) {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date(ms))
-}
-
 export function mooieDatum(iso) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso
   return new Intl.DateTimeFormat('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }).format(
     new Date(iso + 'T12:00:00'),
   )

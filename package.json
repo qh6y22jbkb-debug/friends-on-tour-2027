@@ -1,5 +1,5 @@
 {
-  "name": "operatie-mysterieweekend",
+  "name": "friends-on-tour-2027",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -14,7 +14,7 @@
     "deploy": "npm run lekcheck && npm run build && npm run lekcheck -- --alleen-dist && wrangler deploy"
   },
   "dependencies": {
-    "canvas-confetti": "^1.9.4",
+    "lucide-react": "^1.55.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },

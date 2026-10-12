@@ -1,4 +1,4 @@
-name = "operatie-mysterieweekend"
+name = "friends-on-tour-2027"
 main = "worker/index.js"
 compatibility_date = "2026-09-01"
 
@@ -8,11 +8,11 @@ directory = "./dist"
 not_found_handling = "single-page-application"
 run_worker_first = ["/api/*"]
 
-# Gedeelde opslag (gokken, kas, playlist, scores, foto's).
+# Gedeelde opslag (wachtwoord-hashes, paklijsten, kosten, afvinkstatus).
 # Maak hem aan met: npx wrangler kv namespace create DATA  en plak het id hieronder.
 [[kv_namespaces]]
 binding = "DATA"
 id = "VUL_HIER_HET_KV_ID_IN"
 
-# Geheimen (REVEAL_B64, ORG_HASH, GROEP_HASH) staan NIET hier,
+# Geheimen (CONTENT_B64, HINTS_B64, SESSIE_GEHEIM) staan NIET hier,
 # maar worden geüpload met: npm run geheim:upload
