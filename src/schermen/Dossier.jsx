@@ -68,23 +68,7 @@ export default function Dossier({ naam, nu, open, onthulling, onOpenEnveloppe })
         </section>
       )}
 
-      {d.programma?.length > 0 && (
-        <section className="kaart">
-          <h2 className="kop text-xl">🗓️ Programma</h2>
-          <div className="mt-2 space-y-3">
-            {d.programma.map((dag, i) => (
-              <div key={i}>
-                <p className="label">{dag.dag}</p>
-                <ul className="mt-1 list-inside list-disc space-y-0.5">
-                  {dag.items.map((it, j) => (
-                    <li key={j}>{it}</li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {d.programma?.length > 0 && <Programma dagen={d.programma} />}
 
       {d.pakadvies?.length > 0 && (
         <section className="kaart">
@@ -96,6 +80,30 @@ export default function Dossier({ naam, nu, open, onthulling, onOpenEnveloppe })
           </ul>
         </section>
       )}
+
+      {d.organisatie?.map((blok, i) => (
+        <section key={i} className="kaart">
+          <h2 className="kop text-xl">
+            {blok.emoji} {blok.kop}
+          </h2>
+          <dl className="mt-2 divide-y divide-paars-700/60">
+            {blok.regels.map((r, j) => (
+              <div key={j} className="grid grid-cols-[6.5rem_1fr] gap-2 py-2">
+                <dt className="text-sm text-paars-300">{r.label}</dt>
+                <dd className="font-semibold">
+                  {r.tekst}
+                  {r.link && (
+                    <>
+                      {' '}
+                      <Link href={r.link}>{r.linkTekst || 'Link'}</Link>
+                    </>
+                  )}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      ))}
 
       <GokkenBlok doel={d.coordinaten} />
       <Fotomuur naam={naam} />
@@ -158,6 +166,45 @@ function Blok({ titel, emoji, velden }) {
         ))}
       </dl>
       {velden.link && <Link href={velden.link}>Meer info</Link>}
+    </section>
+  )
+}
+
+// Programma per dag: tik op een dag om hem open te klappen.
+function Programma({ dagen }) {
+  const [open, setOpen] = useState(0)
+  return (
+    <section className="space-y-2">
+      <h2 className="kop text-xl">🗓️ Programma</h2>
+      {dagen.map((dag, i) => (
+        <div key={i} className={`kaart p-0 ${open === i ? 'border-goud' : ''}`}>
+          <button className="flex w-full items-center gap-3 p-4 text-left" onClick={() => setOpen(open === i ? -1 : i)}>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-paars-800 font-kop text-lg font-black text-goud-licht">
+              {i + 1}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="label block">{dag.dag}</span>
+              {dag.titel && <span className="block truncate font-bold">{dag.titel}</span>}
+            </span>
+            <span className={`text-goud transition ${open === i ? 'rotate-180' : ''}`}>▾</span>
+          </button>
+          {open === i && (
+            <div className="binnenkomen border-t border-paars-700 px-4 pt-2 pb-4">
+              <ul className="space-y-1.5">
+                {dag.items.map((it, j) => (
+                  <li key={j} className="flex gap-2">
+                    <span className="text-goud">→</span>
+                    <span>{it}</span>
+                  </li>
+                ))}
+              </ul>
+              {dag.notitie && (
+                <p className="mt-3 rounded-lg bg-paars-950 p-3 text-sm text-paars-300">{dag.notitie}</p>
+              )}
+            </div>
+          )}
+        </div>
+      ))}
     </section>
   )
 }

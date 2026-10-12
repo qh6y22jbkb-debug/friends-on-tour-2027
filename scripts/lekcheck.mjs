@@ -27,8 +27,10 @@ if (fs.existsSync('secret/reveal.json')) {
   voegToe(r.bestemming)
   voegToe(r.land)
   voegToe(r.verblijf?.naam)
-  for (const deel of String(r.verblijf?.adres || '').split(/[\s,]+/)) {
-    if (deel.length >= 5 && !/\d/.test(deel)) voegToe(deel)
+  // Alleen namen (met hoofdletter) uit het adres, geen gewone woorden als "centrum".
+  const ALGEMEEN = new Set(['centrum', 'straat', 'plein', 'appartement', 'hotel'])
+  for (const deel of String(r.verblijf?.adres || '').split(/[\s,()]+/)) {
+    if (deel.length >= 5 && /^\p{Lu}/u.test(deel) && !/\d/.test(deel) && !ALGEMEEN.has(normaal(deel))) voegToe(deel)
   }
 }
 for (const lijst of ['secret/lekwoorden.txt', extra].filter(Boolean)) {

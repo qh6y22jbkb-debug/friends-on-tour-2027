@@ -1,18 +1,51 @@
 {
   "paklijst": [
-    "Geldig ID-bewijs",
-    "Telefoon + oplader",
-    "Powerbank (voor de 3%-agent)",
-    "Tandenborstel en tandpasta",
-    "Deodorant (voor ieders bestwil)",
-    "Ondergoed en sokken voor het hele weekend (+1 reserve)",
-    "Medicijnen, als je die gebruikt",
-    "Oordopjes (er is altijd één snurker)",
-    "Bankpas",
-    "Kaartspel of ander spelletje",
-    "Snacks voor onderweg",
-    "Opvouwbare tas",
-    "Een goed humeur (verplicht)"
+    {
+      "cat": "📄 Papieren & geld",
+      "items": ["Geldig ID-bewijs (check de vervaldatum!)", "Bankpas", "Wat contant geld", "Reisverzekering geregeld"]
+    },
+    {
+      "cat": "👕 Kleding",
+      "items": [
+        "T-shirts (3–4 stuks)",
+        "Broek of jeans (1–2 stuks)",
+        "Trui of vest",
+        "Ondergoed en sokken voor het hele weekend (+1 reserve)",
+        "Nette outfit voor een avondje uit",
+        "Pyjama / slaapkleding"
+      ]
+    },
+    {
+      "cat": "👟 Schoenen",
+      "items": ["Schoenen waar je de hele dag op kunt lopen", "Slippers voor het verblijf"]
+    },
+    {
+      "cat": "🪥 Verzorging",
+      "items": [
+        "Tandenborstel en tandpasta",
+        "Deodorant (voor ieders bestwil)",
+        "Shampoo + douchegel (kleine flesjes)",
+        "Scheerspullen",
+        "Persoonlijke medicijnen",
+        "Paracetamol en pleisters",
+        "Oordopjes (er is altijd één snurker)"
+      ]
+    },
+    {
+      "cat": "⚡ Elektronica",
+      "items": ["Telefoon + oplader", "Powerbank (voor de 3%-agent)", "Oortjes / koptelefoon", "USB-kabel(s)"]
+    },
+    {
+      "cat": "🎯 Overig",
+      "items": [
+        "Kaartspel of ander spelletje (voor de avonden)",
+        "Herbruikbare waterfles",
+        "Kleine dagrugzak",
+        "Snacks voor onderweg",
+        "Tas of koffer (niet te groot!)",
+        "Een goed humeur (verplicht)"
+      ]
+    }
   ],
   "vertrekbord": [
     { "tijd": "04:44", "naar": "GEHEIM", "perron": "?", "status": "Op tijd (waarschijnlijk)" },

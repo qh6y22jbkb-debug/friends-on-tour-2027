@@ -33,7 +33,7 @@ Lokale testdata (gokken, kas, foto's) staat in `.wrangler/state`. Gooi die map w
    ```bash
    cp secret/reveal.example.json secret/reveal.json
    ```
-2. Vul `secret/reveal.json` in: bestemming, land, `coordinaten` (lat/lon, nodig voor de *dichtst-bij-prijs*), heen- en terugreis, tickets, verblijf, programma en pakadvies.
+2. Vul `secret/reveal.json` in: bestemming, land, `coordinaten` (lat/lon, nodig voor de *dichtst-bij-prijs*), heen- en terugreis, tickets, verblijf, `programma` (per dag een titel, activiteiten en een optionele notitie), `organisatie` (blokken met regels en links, bijv. vervoer en budget), `actiepunten` (startlijst voor *Regelzaken*) en `pakadvies` (komt na de onthulling bovenaan de paklijst).
 3. Pas `secret/codes.json` aan:
    - `organisatorCode`: jouw geheime preview-code. Maak hem lang, want raden moet onmogelijk zijn.
    - `groepscode`: de code die je in de groepsapp deelt, zodat vreemden niks kunnen.
@@ -81,7 +81,7 @@ Heb je `reveal.json` of de codes aangepast? Draai dan opnieuw `npm run geheim:up
 | Hints (datum + tekst) | `src/data/hints.json` |
 | Quizvragen | `src/data/quiz.json` |
 | Bingovakjes | `src/data/bingo.json` |
-| Paklijst, vertrekbord, mijlpalen, easter-egg-teksten | `src/data/extra.json` |
+| Algemene paklijst (per categorie), vertrekbord, mijlpalen, easter-egg-teksten | `src/data/extra.json` |
 | Onthullingsmoment | `src/data/moment.js` |
 
 Over een paar onderdelen:
@@ -92,7 +92,9 @@ Over een paar onderdelen:
 
 ## Functies
 
-Aftelklok · cryptische hints · gokspel met dichtst-bij-prijs · vriendenquiz met scorebord · gedeelde kas · playlist (1 nummer p.p.) · weekend-bingo (eigen kaart per persoon) · nep-vertrekbord en paklijst · mijlpaal-badges · fotomuur (pas na onthulling) · enveloppe met confetti en fanfare · easter egg: tik 7× snel op het logo.
+Aftelklok · cryptische hints · gokspel met dichtst-bij-prijs · vriendenquiz met scorebord · gedeelde kas · playlist (1 nummer p.p.) · weekend-bingo (eigen kaart per persoon) · nep-vertrekbord · paklijst met categorieën, voortgang en eigen items (plus geheim pakadvies na de onthulling) · mijlpaal-badges · dossier met dagprogramma en organisatie-info · fotomuur (pas na onthulling) · enveloppe met confetti en fanfare · easter egg: tik 7× snel op het logo.
+
+**Alleen voor de organisatie** (met organisatorcode): *Groep → 🔑 Regelen*, een gedeelde takenlijst. De eerste keer wordt hij gevuld met de `actiepunten` uit `reveal.json`. Zonder code geeft de server deze lijst nooit terug.
 
 ## Veiligheid van de verrassing
 

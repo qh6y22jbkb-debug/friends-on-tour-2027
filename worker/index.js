@@ -187,6 +187,34 @@ async function api(request, env, url) {
       return json({ ingevuld: Object.keys(ingevuld), scores: quizScores(ingevuld) })
     }
 
+    // Takenlijst voor de organisatie: alleen met organisatorcode, want de taken verraden van alles.
+    case '/api/regelzaken': {
+      if (!org) stop('Alleen voor de organisatie.', 403)
+      let taken = await lees(env, 'regelzaken', null)
+      const nieuweLijst = !taken
+      if (nieuweLijst) {
+        const start = env.REVEAL_B64 ? leesGeheim(env).actiepunten ?? [] : []
+        taken = start.map((a) => ({ id: crypto.randomUUID(), tekst: a.tekst, wanneer: a.wanneer ?? '', klaar: false }))
+      }
+      if (methode === 'POST') {
+        if (body.actie === 'toevoegen') {
+          const t = tekst(body.tekst, 200)
+          if (!t) stop('Een lege taak? Die is al klaar.')
+          taken.push({ id: crypto.randomUUID(), tekst: t, wanneer: tekst(body.wanneer, 40), klaar: false })
+        } else if (body.actie === 'afvinken') {
+          const taak = taken.find((t) => t.id === body.id)
+          if (taak) {
+            taak.klaar = Boolean(body.waarde)
+            taak.door = taak.klaar ? tekst(body.naam, 20) : undefined
+          }
+        } else if (body.actie === 'verwijder') {
+          taken = taken.filter((t) => t.id !== body.id)
+        } else stop('Onbekende actie.')
+      }
+      if (methode === 'POST' || (nieuweLijst && taken.length)) await schrijf(env, 'regelzaken', taken)
+      return json(taken)
+    }
+
     case '/api/fotos': {
       if (!open) return json({ open: false, fotos: [] })
       const fotos = await lees(env, 'fotos', [])

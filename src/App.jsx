@@ -65,7 +65,9 @@ export default function App() {
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-goud/15 bg-nacht/85 px-4 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3 backdrop-blur">
         <Logo />
         <button onClick={() => setInstellingen(true)} className="text-right" aria-label="Instellingen">
-          <span className="block font-typemachine text-[10px] tracking-[0.2em] text-paars-300">AGENT</span>
+          <span className="block font-typemachine text-[10px] tracking-[0.2em] text-paars-300">
+            {lees('orgcode') ? '🔑 ORGANISATIE' : 'AGENT'}
+          </span>
           <span className="block font-bold text-goud-licht">{naam} ⚙️</span>
         </button>
       </header>
