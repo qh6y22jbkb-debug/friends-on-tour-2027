@@ -1,0 +1,20 @@
+{
+  "uitleg": "Elke vraag heeft als antwoord één van de agenten. Laat 'antwoord' leeg (null) en de groep beslist: wie hetzelfde kiest als de meerderheid, scoort. Vul je wél een naam in, dan telt alleen die.",
+  "vragen": [
+    { "vraag": "Wie van ons is het vaakst te laat?", "antwoord": null },
+    { "vraag": "Wie valt als eerste in slaap op de heenreis?", "antwoord": null },
+    { "vraag": "Wie neemt de meeste kleding mee voor een weekendje weg?", "antwoord": null },
+    { "vraag": "Wie zegt het vaakst \"nog eentje dan\"?", "antwoord": null },
+    { "vraag": "Wie raakt dit weekend als eerste iets kwijt? (Telefoon, sleutel of waardigheid.)", "antwoord": null },
+    { "vraag": "Wie heeft het slechtste richtingsgevoel?", "antwoord": null },
+    { "vraag": "Wie bestelt in een restaurant altijd ongeveer hetzelfde?", "antwoord": null },
+    { "vraag": "Wie maakt de meeste foto's (en stuurt ze nooit door)?", "antwoord": null },
+    { "vraag": "Wie is 's ochtends als eerste wakker?", "antwoord": null },
+    { "vraag": "Wie zingt het hardst (en het valst) mee?", "antwoord": null },
+    { "vraag": "Wie loopt altijd rond met een telefoon op 3% batterij?", "antwoord": null },
+    { "vraag": "Wie geeft het meeste geld uit aan eten?", "antwoord": null },
+    { "vraag": "Wie kan het slechtst een geheim bewaren?", "antwoord": null },
+    { "vraag": "Wie stuurt de meeste spraakberichten in de groepsapp?", "antwoord": null },
+    { "vraag": "Wie overleeft het langst in een zombie-apocalyps?", "antwoord": null }
+  ]
+}

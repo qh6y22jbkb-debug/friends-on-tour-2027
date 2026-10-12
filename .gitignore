@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.DS_Store
+
+# Alles wat geheim is blijft lokaal
+secret/*
+!secret/reveal.example.json
+!secret/README.md

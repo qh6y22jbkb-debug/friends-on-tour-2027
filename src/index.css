@@ -1,0 +1,87 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-nacht: #0b0710;
+  --color-paars-950: #120a1e;
+  --color-paars-900: #1a0f2b;
+  --color-paars-800: #2a1846;
+  --color-paars-700: #3d2463;
+  --color-paars-300: #b9a6d6;
+  --color-goud: #d4a72c;
+  --color-goud-licht: #f5d68a;
+  --color-zegel: #7a1f3d;
+  --font-typemachine: 'Special Elite', 'Courier New', monospace;
+  --font-kop: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--color-nacht);
+  color: #ece6f5;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+body {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(61, 36, 99, 0.55), transparent 55%),
+    radial-gradient(circle at 100% 100%, rgba(122, 31, 61, 0.25), transparent 50%);
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+
+@layer components {
+  .kaart {
+    @apply rounded-2xl border border-goud/25 bg-paars-900/80 p-4 shadow-lg shadow-black/40 backdrop-blur;
+  }
+  .knop {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-goud px-4 py-3 font-bold text-nacht transition active:scale-95 disabled:opacity-40;
+  }
+  .knop-stil {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-goud/40 px-4 py-2.5 font-semibold text-goud-licht transition active:scale-95 disabled:opacity-40;
+  }
+  .invoer {
+    @apply w-full rounded-xl border border-paars-700 bg-paars-950 px-3 py-3 text-base text-white placeholder:text-paars-300/50 focus:border-goud focus:outline-none;
+  }
+  .stempel {
+    @apply inline-block -rotate-6 rounded border-2 border-zegel px-2 py-0.5 font-typemachine text-xs tracking-widest text-[#e05a7e] uppercase;
+  }
+  .kop {
+    @apply font-kop text-2xl font-black text-goud-licht;
+  }
+  .label {
+    @apply font-typemachine text-xs tracking-[0.2em] text-goud uppercase;
+  }
+}
+
+@keyframes binnenkomen {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.binnenkomen { animation: binnenkomen 0.35s ease-out both; }
+
+@keyframes schudden {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-4deg); }
+  40% { transform: rotate(4deg); }
+  60% { transform: rotate(-3deg); }
+  80% { transform: rotate(2deg); }
+}
+.schudden { animation: schudden 0.6s ease-in-out infinite; }
+
+@keyframes flap {
+  from { transform: rotateX(0deg); }
+  to { transform: rotateX(180deg); }
+}
+.flap-open { animation: flap 0.7s ease-in forwards; transform-origin: top; }
+
+@keyframes brief {
+  from { transform: translateY(0); }
+  to { transform: translateY(-70%); }
+}
+.brief-uit { animation: brief 0.8s 0.6s ease-out forwards; }
+
+@media (prefers-reduced-motion: reduce) {
+  .schudden, .binnenkomen { animation: none; }
+}
