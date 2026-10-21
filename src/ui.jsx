@@ -4,51 +4,78 @@ import { minderBeweging } from './lib/overgang.js'
 
 /* ---------- Schermopbouw ---------- */
 
+// Hoofdscherm: grote titel. Subscherm: ronde terugknop met de titel in het midden.
 export function Kop({ titel, sub, terug }) {
+  if (terug) {
+    return (
+      <header className="mb-6">
+        <div className="grid grid-cols-[48px_1fr_48px] items-center">
+          <button
+            type="button"
+            onClick={terug}
+            aria-label="Terug"
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-vlak transition-transform duration-150 active:scale-95"
+          >
+            <ChevronLeft size={22} strokeWidth={2} />
+          </button>
+          <h1 className="truncate px-2 text-center text-lg font-semibold">{titel}</h1>
+        </div>
+        {sub && <p className="mt-3 text-center text-tekst-zacht">{sub}</p>}
+      </header>
+    )
+  }
   return (
     <header className="mb-6">
-      {terug && (
-        <button
-          type="button"
-          onClick={terug}
-          className="-ml-2 mb-2 flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium text-tekst-zacht active:bg-vlak-zacht"
-        >
-          <ChevronLeft size={18} strokeWidth={1.75} /> Terug
-        </button>
-      )}
-      <h1 className="text-2xl font-semibold tracking-tight">{titel}</h1>
+      <h1 className="text-[28px] leading-tight font-bold tracking-tight">{titel}</h1>
       {sub && <p className="mt-1 text-tekst-zacht">{sub}</p>}
     </header>
+  )
+}
+
+export function Sectiekop({ titel, actie }) {
+  return (
+    <div className="mb-3 flex items-baseline justify-between">
+      <h2 className="text-xl font-bold tracking-tight">{titel}</h2>
+      {actie}
+    </div>
   )
 }
 
 export function Blok({ titel, children, actie }) {
   return (
     <section className="mb-6">
-      {(titel || actie) && (
-        <div className="mb-2 flex items-center justify-between px-1">
-          <h2 className="text-xs font-semibold tracking-wide text-tekst-zacht uppercase">{titel}</h2>
-          {actie}
-        </div>
-      )}
-      <div className="overflow-hidden rounded-xl border border-rand bg-vlak">{children}</div>
+      {(titel || actie) && <Sectiekop titel={titel} actie={actie} />}
+      <div className="overflow-hidden rounded-[28px] bg-vlak">{children}</div>
     </section>
   )
 }
 
+export function Rondje({ children, className = '' }) {
+  return (
+    <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-vlak-zacht ${className}`}>
+      {children}
+    </span>
+  )
+}
+
 // Een rij in een lijst; klikbaar als er een onClick is.
-export function Rij({ icoon: Icoon, titel, sub, rechts, onClick, i = 0, pijl = !!onClick }) {
+export function Rij({ icoon: Icoon, voor, titel, sub, rechts, onClick, i = 0, pijl = !!onClick }) {
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag
       type={onClick ? 'button' : undefined}
       onClick={onClick}
       style={{ '--i': i }}
-      className="opkomen flex min-h-12 w-full items-center gap-3 border-b border-rand px-4 py-3 text-left last:border-b-0 active:bg-vlak-zacht"
+      className="opkomen flex min-h-16 w-full items-center gap-3 border-b border-rand px-5 py-3 text-left last:border-b-0 active:bg-vlak-zacht/50"
     >
-      {Icoon && <Icoon size={20} strokeWidth={1.75} className="shrink-0 text-tekst-zacht" />}
+      {voor ??
+        (Icoon && (
+          <Rondje>
+            <Icoon size={19} strokeWidth={1.75} />
+          </Rondje>
+        ))}
       <span className="min-w-0 flex-1">
-        <span className="block">{titel}</span>
+        <span className="block font-medium">{titel}</span>
         {sub && <span className="block text-sm text-tekst-zacht">{sub}</span>}
       </span>
       {rechts}
@@ -60,9 +87,9 @@ export function Rij({ icoon: Icoon, titel, sub, rechts, onClick, i = 0, pijl = !
 // Label/tekst-regels met optionele link, zoals in de content.json.
 export function Regels({ regels = [] }) {
   return regels.map((r, i) => (
-    <div key={i} style={{ '--i': i }} className="opkomen border-b border-rand px-4 py-3 last:border-b-0">
+    <div key={i} style={{ '--i': i }} className="opkomen border-b border-rand px-5 py-3.5 last:border-b-0">
       <p className="text-sm text-tekst-zacht">{r.label}</p>
-      <p>
+      <p className="font-medium">
         {r.tekst}
         {r.link && <Link href={r.link} />}
       </p>
@@ -77,31 +104,50 @@ export function Link({ href, children = 'Openen' }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="ml-2 inline-flex items-center gap-1 font-medium text-accent underline-offset-2 hover:underline"
+      className="ml-2 inline-flex items-center gap-1 font-semibold underline decoration-accent decoration-2 underline-offset-4"
     >
-      {children} <ExternalLink size={14} strokeWidth={1.75} />
+      {children} <ExternalLink size={14} strokeWidth={2} />
     </a>
+  )
+}
+
+// Klein wit labeltje, zoals "Personal" in het ontwerp.
+export function Chip({ children, slot }) {
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-vlak px-3 py-1 text-xs font-semibold whitespace-nowrap">
+      {slot && <Lock size={12} strokeWidth={2.25} />}
+      {children}
+    </span>
   )
 }
 
 /* ---------- Tegels ---------- */
 
-export function Tegel({ icoon: Icoon, titel, sub, slot, onClick, i = 0, breed }) {
+const TINTEN = {
+  roze: 'bg-tint-roze',
+  lila: 'bg-tint-lila',
+  salie: 'bg-tint-salie',
+  zand: 'bg-tint-zand',
+  wit: 'bg-vlak',
+}
+
+export function Tegel({ icoon: Icoon, titel, sub, voet, slot, onClick, i = 0, breed, tint = 'wit' }) {
   return (
     <button
       type="button"
       onClick={onClick}
       style={{ '--i': i }}
-      className={`opkomen flex min-h-28 flex-col items-start rounded-xl border border-rand bg-vlak p-4 text-left transition-transform duration-150 active:scale-[0.98] ${
-        breed ? 'col-span-2' : ''
-      }`}
+      className={`opkomen flex min-h-36 flex-col items-start rounded-[24px] p-4 text-left transition-transform duration-150 active:scale-[0.98] ${
+        TINTEN[tint]
+      } ${breed ? 'col-span-2' : ''}`}
     >
-      <span className="flex w-full items-center justify-between">
-        <Icoon size={22} strokeWidth={1.75} className="text-accent" />
-        {slot && <Lock size={16} strokeWidth={1.75} className="text-tekst-zacht" aria-label="Vergrendeld" />}
+      {Icoon && <Icoon size={22} strokeWidth={1.75} />}
+      <span className="mt-3 font-semibold">{titel}</span>
+      {sub && <span className="text-sm leading-snug text-tekst-zacht">{sub}</span>}
+      <span className="mt-auto flex w-full items-center justify-between gap-2 pt-3">
+        <span className="text-xs whitespace-nowrap text-tekst-zacht">{voet}</span>
+        <Chip slot={slot}>{slot ? 'Op slot' : 'Open'}</Chip>
       </span>
-      <span className="mt-auto pt-4 font-medium">{titel}</span>
-      {sub && <span className="text-sm text-tekst-zacht">{sub}</span>}
     </button>
   )
 }
@@ -110,14 +156,10 @@ export function Tegel({ icoon: Icoon, titel, sub, slot, onClick, i = 0, breed })
 
 export function Knop({ children, variant = 'vol', className = '', ...rest }) {
   const stijl =
-    variant === 'vol'
-      ? 'bg-accent text-op-accent'
-      : variant === 'rand'
-        ? 'border border-rand bg-vlak text-tekst'
-        : 'text-accent'
+    variant === 'vol' ? 'bg-accent text-op-accent' : variant === 'rand' ? 'bg-vlak text-tekst' : 'text-tekst underline decoration-accent decoration-2 underline-offset-4'
   return (
     <button
-      className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 font-medium transition-transform duration-150 active:scale-[0.98] disabled:opacity-40 ${stijl} ${className}`}
+      className={`flex min-h-14 items-center justify-center gap-2 rounded-full px-6 font-semibold transition-transform duration-150 active:scale-[0.98] disabled:opacity-40 ${stijl} ${className}`}
       {...rest}
     >
       {children}
@@ -128,9 +170,9 @@ export function Knop({ children, variant = 'vol', className = '', ...rest }) {
 export function Veld({ label, ...rest }) {
   return (
     <label className="block">
-      {label && <span className="mb-1 block text-sm text-tekst-zacht">{label}</span>}
+      {label && <span className="mb-1.5 block text-sm font-medium text-tekst-zacht">{label}</span>}
       <input
-        className="min-h-11 w-full rounded-lg border border-rand bg-vlak px-3 text-base outline-none focus:border-accent"
+        className="min-h-14 w-full rounded-2xl border-2 border-transparent bg-vlak px-4 text-base outline-none focus:border-accent"
         {...rest}
       />
     </label>
@@ -139,14 +181,10 @@ export function Veld({ label, ...rest }) {
 
 export function Fout({ children }) {
   if (!children) return null
-  return <p className="mt-2 text-sm text-fout">{children}</p>
+  return <p className="mt-2 text-sm font-medium text-fout">{children}</p>
 }
 
-export function Laden() {
-  return <p className="py-8 text-center text-tekst-zacht">Laden…</p>
-}
-
-// Afvinkbare rij: vinkje springt in, tekst wordt doorgehaald.
+// Afvinkbare rij: rond vinkje springt in, tekst wordt doorgehaald.
 export function Vinkrij({ aan, onWissel, titel, sub, i = 0 }) {
   return (
     <button
@@ -155,14 +193,14 @@ export function Vinkrij({ aan, onWissel, titel, sub, i = 0 }) {
       aria-checked={aan}
       onClick={onWissel}
       style={{ '--i': i }}
-      className="opkomen flex min-h-12 w-full items-center gap-3 border-b border-rand px-4 py-3 text-left last:border-b-0 active:bg-vlak-zacht"
+      className="opkomen flex min-h-14 w-full items-center gap-3 border-b border-rand px-5 py-3 text-left last:border-b-0 active:bg-vlak-zacht/50"
     >
       <span
-        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-colors duration-200 ${
-          aan ? 'border-accent bg-accent text-op-accent' : 'border-rand'
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200 ${
+          aan ? 'border-accent bg-accent text-op-accent' : 'border-vlak-zacht'
         }`}
       >
-        {aan && <Check size={14} strokeWidth={2.5} className="vinkje" />}
+        {aan && <Check size={14} strokeWidth={3} className="vinkje" />}
       </span>
       <span className="min-w-0 flex-1">
         <span className="doorhaal inline" data-aan={aan}>
@@ -179,7 +217,7 @@ export function Vinkrij({ aan, onWissel, titel, sub, i = 0 }) {
 export function Voortgang({ waarde, totaal }) {
   const deel = totaal ? waarde / totaal : 0
   return (
-    <div className="h-1.5 overflow-hidden rounded-full bg-vlak-zacht">
+    <div className="h-3 overflow-hidden rounded-full bg-vlak-zacht">
       <div className="balk h-full w-full rounded-full bg-accent" style={{ transform: `scaleX(${deel})` }} />
     </div>
   )
@@ -249,11 +287,11 @@ export function Sheet({ open, onSluit, titel, children }) {
         onClick={onSluit}
       />
       <div
-        className="sheet-paneel relative w-full max-w-md rounded-t-2xl border border-b-0 border-rand bg-vlak px-4 pt-3 pb-[max(env(safe-area-inset-bottom),1.5rem)]"
+        className="sheet-paneel relative w-full max-w-md rounded-t-[32px] bg-achtergrond px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1.5rem)]"
         style={{ transform: binnen ? 'translateY(0)' : 'translateY(100%)' }}
       >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-rand" />
-        {titel && <h2 className="mb-4 text-lg font-semibold">{titel}</h2>}
+        <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-vlak-zacht" />
+        {titel && <h2 className="mb-4 text-xl font-bold">{titel}</h2>}
         {children}
       </div>
     </div>

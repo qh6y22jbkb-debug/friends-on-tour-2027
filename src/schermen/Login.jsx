@@ -1,9 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { User } from 'lucide-react'
 import { DEELNEMERS, TITEL } from '../config.js'
 import { ontgrendelAlles } from '../lib/kluis.js'
 import { overgang } from '../lib/overgang.js'
-import { Blok, Fout, Knop, Kop, Rij, Veld } from '../ui.jsx'
+import { Blok, Fout, Knop, Kop, Rij, Rondje, Veld } from '../ui.jsx'
 
 export default function Login({ onGekozen }) {
   const [org, setOrg] = useState(null)
@@ -20,7 +19,14 @@ export default function Login({ onGekozen }) {
           <Kop titel="Wie ben jij?" sub="Kies je naam om verder te gaan." />
           <Blok>
             {DEELNEMERS.map((d, i) => (
-              <Rij key={d.naam} i={i} icoon={User} titel={d.naam} onClick={() => kies(d)} />
+              <Rij
+                key={d.naam}
+                i={i}
+                voor={<Rondje className="font-bold">{d.naam[0]}</Rondje>}
+                titel={d.naam}
+                sub={d.rol === 'organisator' ? 'Organisator' : null}
+                onClick={() => kies(d)}
+              />
             ))}
           </Blok>
         </>
@@ -47,7 +53,7 @@ export function OrganisatorSlot({ naam, onOpen, onAnders }) {
 function Scherm({ children }) {
   return (
     <div className="mx-auto min-h-dvh max-w-md px-4 pt-[max(env(safe-area-inset-top),3rem)] pb-10">
-      <p className="mb-1 text-sm font-medium text-accent">{TITEL}</p>
+      <p className="mb-1 text-sm font-medium text-tekst-zacht">{TITEL}</p>
       {children}
     </div>
   )

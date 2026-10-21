@@ -102,26 +102,31 @@ export default function App() {
   const sleutel = `${nav.tab}-${s?.soort ?? ''}-${s?.id ?? ''}`
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md px-4 pt-[max(env(safe-area-inset-top),1.5rem)] pb-28">
+    <div className="mx-auto min-h-dvh max-w-md px-5 pt-[max(env(safe-area-inset-top),1.5rem)] pb-32">
       <main key={sleutel} className={heeftViewTransitions() ? '' : 'scherm-in'}>
         {inhoud}
       </main>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-rand bg-vlak pb-[env(safe-area-inset-bottom)]">
-        <div className="mx-auto flex max-w-md">
-          {TABS.map(([id, label, Icoon]) => (
-            <button
-              key={id}
-              onClick={() => ga({ tab: id, scherm: null })}
-              aria-current={nav.tab === id && !s ? 'page' : undefined}
-              className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${
-                nav.tab === id ? 'text-accent' : 'text-tekst-zacht'
-              }`}
-            >
-              <Icoon size={22} strokeWidth={nav.tab === id ? 2 : 1.75} />
-              {label}
-            </button>
-          ))}
+      <nav className="fixed inset-x-0 bottom-0 z-40 rounded-t-[28px] bg-vlak pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_rgba(0,0,0,0.04)]">
+        <div className="mx-auto flex max-w-md px-2">
+          {TABS.map(([id, label, Icoon]) => {
+            const actief = nav.tab === id
+            return (
+              <button
+                key={id}
+                onClick={() => ga({ tab: id, scherm: null })}
+                aria-current={actief && !s ? 'page' : undefined}
+                className={`flex min-h-16 flex-1 flex-col items-center justify-center gap-1 text-xs ${
+                  actief ? 'font-bold text-tekst' : 'font-medium text-tekst-zacht'
+                }`}
+              >
+                <span className={`flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-200 ${actief ? 'bg-accent text-op-accent' : ''}`}>
+                  <Icoon size={20} strokeWidth={actief ? 2.25 : 1.75} />
+                </span>
+                {label}
+              </button>
+            )
+          })}
         </div>
       </nav>
 

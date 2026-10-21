@@ -1,6 +1,7 @@
 [
   {
     "groep": "Documenten",
+    "kort": "Papieren",
     "items": [
       {
         "id": "doc-id",
@@ -26,6 +27,7 @@
   },
   {
     "groep": "Kleding",
+    "kort": "Kleding",
     "items": [
       {
         "id": "kl-shirts",
@@ -63,6 +65,7 @@
   },
   {
     "groep": "Verzorging",
+    "kort": "Zorg",
     "items": [
       {
         "id": "vz-tanden",
@@ -92,6 +95,7 @@
   },
   {
     "groep": "Elektronica",
+    "kort": "Tech",
     "items": [
       {
         "id": "el-telefoon",
@@ -113,6 +117,7 @@
   },
   {
     "groep": "Overig",
+    "kort": "Overig",
     "items": [
       {
         "id": "ov-tas",

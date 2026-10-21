@@ -70,9 +70,20 @@ function scan(naam, inhoud) {
   })
 }
 
-for (const p of bestanden(alleenDist ? 'dist' : '.')) {
+// Wat gepubliceerd kan worden: bestanden die git meeneemt (gitignore telt mee) plus de build.
+function* teControleren() {
+  if (alleenDist || !fs.existsSync('.git')) return yield* bestanden(alleenDist ? 'dist' : '.')
+  const lijst = execSync('git ls-files -z --cached --others --exclude-standard', { encoding: 'utf8' })
+  for (const p of lijst.split('\0')) if (p && fs.existsSync(p)) yield p
+  yield* bestanden('dist')
+}
+
+// Van afbeeldingen alleen de naam bekijken: in de bytes zitten toevallige lettercombinaties.
+const BINAIR = /\.(png|jpe?g|gif|webp|ico|heic|pdf|woff2?)$/i
+
+for (const p of teControleren()) {
   scan(p, p) // ook bestandsnamen/paden
-  scan(p, fs.readFileSync(p, 'utf8'))
+  if (!BINAIR.test(p)) scan(p, fs.readFileSync(p, 'utf8'))
 }
 
 if (!alleenDist && fs.existsSync('.git')) {

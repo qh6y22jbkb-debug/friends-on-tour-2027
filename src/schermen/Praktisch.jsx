@@ -29,7 +29,7 @@ export default function Praktisch({ inhoud, terug }) {
               i={i++}
               icoon={Phone}
               titel={n.label}
-              rechts={<span className="font-medium text-accent tabular-nums">{n.nummer}</span>}
+              rechts={<span className="rounded-full bg-accent px-3 py-1 font-semibold text-op-accent tabular-nums">{n.nummer}</span>}
               pijl={false}
             />
           </a>
@@ -43,7 +43,7 @@ export default function Praktisch({ inhoud, terug }) {
               icoon={User}
               titel={c.naam}
               sub={c.rol}
-              rechts={c.telefoon ? <span className="text-sm text-accent tabular-nums">{c.telefoon}</span> : null}
+              rechts={c.telefoon ? <span className="text-sm font-semibold tabular-nums">{c.telefoon}</span> : null}
               pijl={false}
             />
           )

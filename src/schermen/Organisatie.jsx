@@ -22,7 +22,7 @@ export default function Organisatie({ inhoud, terug }) {
     <>
       <Kop titel="Organisatie" sub="Alleen voor organisatoren. Afvinken wordt op deze telefoon onthouden." terug={terug} />
 
-      <div className="mb-6 rounded-xl border border-rand bg-vlak p-4">
+      <div className="mb-8 rounded-[28px] bg-vlak p-5">
         <p className="mb-2 text-sm">
           <Teller waarde={klaar} /> van {punten.length} geregeld
         </p>

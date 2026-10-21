@@ -12,3 +12,6 @@ secret/*
 
 # Lokale testmodus
 .env.local
+
+# Ontwerp-voorbeelden (niet publiceren)
+Scherm*afbeelding*

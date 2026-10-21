@@ -1,32 +1,47 @@
 @import 'tailwindcss';
 
 /* Kleuren als tokens; donkere modus volgt het systeem. */
+/* Warm neutraal met één oker-gele accentkleur; zachte tinten voor de snelkoppelingen. */
 :root {
-  --achtergrond: #f6f6f4;
+  --achtergrond: #f0eeea;
   --vlak: #ffffff;
-  --vlak-zacht: #efefec;
-  --rand: #e3e3df;
-  --tekst: #1a1a19;
-  --tekst-zacht: #6b6b66;
-  --accent: #1d6b57;
-  --accent-zacht: #e3f0eb;
-  --op-accent: #ffffff;
+  --vlak-zacht: #e6e2dc;
+  --rand: #e7e3dd;
+  --tekst: #1f1e1c;
+  --tekst-zacht: #6f6a62;
+  --accent: #f2bc4b;
+  --accent-zacht: #fbeac2;
+  --op-accent: #1f1e1c;
   --fout: #b4321f;
+  --tint-roze: #f3dad4;
+  --tint-lila: #e3ddf6;
+  --tint-salie: #e2e7d2;
+  --tint-zand: #dcd5cb;
+  --staaf-1: #f2bc4b;
+  --staaf-2: #6e4539;
+  --staaf-3: #8ea34b;
+  --staaf-4: #7b766b;
+  --staaf-5: #e39b8e;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --achtergrond: #121413;
-    --vlak: #1a1d1b;
-    --vlak-zacht: #222624;
-    --rand: #2c302e;
-    --tekst: #ecedea;
-    --tekst-zacht: #9a9e99;
-    --accent: #5cbf9d;
-    --accent-zacht: #1d2f28;
-    --op-accent: #0d1a15;
+    --achtergrond: #161513;
+    --vlak: #22211e;
+    --vlak-zacht: #2e2c28;
+    --rand: #33312c;
+    --tekst: #f2efe9;
+    --tekst-zacht: #a39e95;
+    --accent: #f2bc4b;
+    --accent-zacht: #3a3120;
+    --op-accent: #1f1e1c;
     --fout: #f08a76;
+    --tint-roze: #3b2b27;
+    --tint-lila: #2e2a3e;
+    --tint-salie: #2c3224;
+    --tint-zand: #322e28;
+    --staaf-2: #b07a68;
     color-scheme: dark;
   }
 }
@@ -42,7 +57,11 @@
   --color-accent-zacht: var(--accent-zacht);
   --color-op-accent: var(--op-accent);
   --color-fout: var(--fout);
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --color-tint-roze: var(--tint-roze);
+  --color-tint-lila: var(--tint-lila);
+  --color-tint-salie: var(--tint-salie);
+  --color-tint-zand: var(--tint-zand);
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 html,

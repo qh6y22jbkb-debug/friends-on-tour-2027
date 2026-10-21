@@ -46,7 +46,7 @@ export function Dag({ dag, terug }) {
               target="_blank"
               rel="noreferrer"
               style={{ '--i': dag.items.length + i }}
-              className="opkomen flex min-h-12 items-center gap-3 border-b border-rand px-4 py-3 text-accent last:border-b-0 active:bg-vlak-zacht"
+              className="opkomen flex min-h-12 items-center gap-3 border-b border-rand px-5 py-3 font-semibold last:border-b-0 active:bg-vlak-zacht/50"
             >
               <span className="flex-1">{l.tekst}</span>
               <ExternalLink size={18} strokeWidth={1.75} className="shrink-0" />
@@ -55,8 +55,8 @@ export function Dag({ dag, terug }) {
         </Blok>
       )}
       {dag.notitie && (
-        <div className="opkomen flex gap-3 rounded-xl border border-rand bg-vlak-zacht p-4" style={{ '--i': dag.items.length }}>
-          <CircleAlert size={20} strokeWidth={1.75} className="mt-0.5 shrink-0 text-accent" />
+        <div className="opkomen flex gap-3 rounded-[24px] bg-accent-zacht p-5" style={{ '--i': dag.items.length }}>
+          <CircleAlert size={20} strokeWidth={1.75} className="mt-0.5 shrink-0 " />
           <p className="text-sm">{dag.notitie}</p>
         </div>
       )}
