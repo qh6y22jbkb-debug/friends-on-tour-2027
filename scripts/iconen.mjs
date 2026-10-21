@@ -2,12 +2,12 @@
 import fs from 'node:fs'
 import sharp from 'sharp'
 
-const ACCENT = '#1d6b57'
+const ACCENT = '#f2bc4b'
 
 // Eenvoudige koffer als lijn-icoon.
 const icoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="112" fill="${ACCENT}"/>
-  <g fill="none" stroke="#ffffff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+  <g fill="none" stroke="#1f1e1c" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
     <rect x="136" y="176" width="240" height="200" rx="28"/>
     <path d="M208 176v-28a20 20 0 0 1 20-20h56a20 20 0 0 1 20 20v28"/>
     <path d="M208 236v80M304 236v80"/>
@@ -15,10 +15,10 @@ const icoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
 </svg>`
 
 const deel = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
-  <rect width="1200" height="630" fill="#f6f6f4"/>
+  <rect width="1200" height="630" fill="#f0eeea"/>
   <g transform="translate(120 205) scale(0.43)">${icoon.replace(/<\/?svg[^>]*>/g, '')}</g>
-  <text x="380" y="300" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="600" fill="#1a1a19">Friends on Tour 2027</text>
-  <text x="382" y="365" font-family="Helvetica, Arial, sans-serif" font-size="36" fill="#6b6b66">Een weekend weg met z'n vijven.</text>
+  <text x="380" y="300" font-family="Helvetica, Arial, sans-serif" font-size="76" font-weight="600" fill="#1f1e1c">Friends on Tour 2027</text>
+  <text x="382" y="365" font-family="Helvetica, Arial, sans-serif" font-size="36" fill="#6f6a62">Een weekend weg met z'n vijven.</text>
 </svg>`
 
 fs.writeFileSync('public/icoon.svg', icoon)
