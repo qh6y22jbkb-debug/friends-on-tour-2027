@@ -21,14 +21,14 @@ export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen }) {
           i={i++}
           icoon={MapPin}
           titel="Bestemming"
-          sub={onthuld || isOrg ? null : 'Opent 28 april 2027'}
+          sub={isOrg ? null : 'Met wachtwoord'}
           onClick={() => open('bestemming', 'Bestemming')}
         />
         <Rij
           i={i++}
           icoon={LifeBuoy}
           titel="Praktisch"
-          sub={onthuld || isOrg ? null : 'Opent 28 april 2027'}
+          sub={isOrg ? null : 'Met wachtwoord'}
           onClick={() => open('praktisch', 'Praktisch')}
         />
         <Rij i={i++} icoon={Gem} titel="Schatkisten" onClick={() => ga({ scherm: { soort: 'hints' } })} />

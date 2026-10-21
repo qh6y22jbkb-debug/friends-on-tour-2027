@@ -9,12 +9,12 @@ Installeerbare web-app (PWA) voor het vriendenweekend. Hij draait zonder server,
 - Alle geheime inhoud staat in `secret/content.json`. Dat bestand staat in `.gitignore`.
 - Bij elke build maakt `scripts/versleutel.mjs` daar een versleutelde kluis van (`src/kluis.json`, ook gitignored). Elke tegel krijgt een eigen AES-256-sleutel, die alleen opengaat met het tegelwachtwoord of het organisatorwachtwoord (PBKDF2, 310.000 rondes).
 - In de broncode of de gebouwde app staat dus niets leesbaars. Zonder wachtwoord is de inhoud niet te openen.
-- **Belangrijk:** zonder server kan de app de datum niet afdwingen. Het **bestemmingswachtwoord is het echte slot**: deel het pas uit op 28 april. De aftelklok en de melding "opent 28 april" zijn alleen ter info.
+- **Belangrijk:** Bestemming en Praktisch hebben geen datumslot: het bestemmingswachtwoord is het enige slot. Deel het dus pas uit als de bestemming bekend mag worden. De aftelklok is alleen ter info.
 - Er is geen limiet op het aantal pogingen, dus gebruik lange wachtwoorden (bijv. `molen-vos-431`).
 
 | Tegel | Opent met |
 |---|---|
-| Bestemming + Praktisch | bestemmingswachtwoord (pas uitdelen op 28 april) |
+| Bestemming + Praktisch | bestemmingswachtwoord (geen datum; wie het heeft, kan het openen) |
 | Dag 1–4 | eigen dagwachtwoord |
 | Organisatie | alleen organisatorwachtwoord |
 | Schatkisten (hints) | elk op een eigen datum; organisatoren zien ze altijd |

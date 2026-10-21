@@ -33,7 +33,7 @@ export default function App() {
   const [nav, setNav] = useState({ tab: 'start', scherm: null })
   // Ontgrendelde inhoud blijft alleen in het geheugen.
   const [ontgrendeld, setOntgrendeld] = useState({})
-  const [slot, setSlot] = useState(null) // { id, titel, alleenMelding }
+  const [slot, setSlot] = useState(null) // { id, titel }
   const nu = useNu(1000)
   const onthuld = nu >= ONTHULLING_MS
 
@@ -52,10 +52,9 @@ export default function App() {
   const open = useCallback(
     (id, titel) => {
       if (ontgrendeld[id]) return naarTegel(id)
-      const opTijd = id.startsWith('dag-') || onthuld
-      setSlot({ id, titel, alleenMelding: !opTijd })
+      setSlot({ id, titel })
     },
-    [ontgrendeld, onthuld, naarTegel],
+    [ontgrendeld, naarTegel],
   )
 
   function uitloggen() {
@@ -153,7 +152,7 @@ function SlotSheet({ slot, onSluit, onOpen }) {
   useEffect(() => {
     setWachtwoord('')
     setFout('')
-    if (slot && !slot.alleenMelding) setTimeout(() => veld.current?.focus(), 350)
+    if (slot) setTimeout(() => veld.current?.focus(), 350)
   }, [slot])
 
   async function versturen(e) {
@@ -177,33 +176,24 @@ function SlotSheet({ slot, onSluit, onOpen }) {
 
   return (
     <Sheet open={!!slot} onSluit={onSluit} titel={slot?.titel}>
-      {slot?.alleenMelding ? (
-        <>
-          <p className="text-tekst-zacht">Dit onderdeel opent op 28 april 2027 om 00:00.</p>
-          <Knop className="mt-6 w-full" variant="rand" onClick={onSluit}>
-            Sluiten
-          </Knop>
-        </>
-      ) : (
-        <form onSubmit={versturen}>
-          <p className="mb-4 text-tekst-zacht">Vul het wachtwoord voor dit onderdeel in.</p>
-          <div className={schud ? 'schud' : ''} onAnimationEnd={() => setSchud(false)}>
-            <Veld
-              ref={veld}
-              type="password"
-              value={wachtwoord}
-              onChange={(e) => setWachtwoord(e.target.value)}
-              placeholder="Wachtwoord"
-              autoComplete="off"
-              autoCapitalize="none"
-            />
-          </div>
-          <Fout>{fout}</Fout>
-          <Knop className="mt-4 w-full" disabled={!wachtwoord || bezig}>
-            {bezig ? 'Openen…' : 'Openen'}
-          </Knop>
-        </form>
-      )}
+      <form onSubmit={versturen}>
+        <p className="mb-4 text-tekst-zacht">Vul het wachtwoord voor dit onderdeel in.</p>
+        <div className={schud ? 'schud' : ''} onAnimationEnd={() => setSchud(false)}>
+          <Veld
+            ref={veld}
+            type="password"
+            value={wachtwoord}
+            onChange={(e) => setWachtwoord(e.target.value)}
+            placeholder="Wachtwoord"
+            autoComplete="off"
+            autoCapitalize="none"
+          />
+        </div>
+        <Fout>{fout}</Fout>
+        <Knop className="mt-4 w-full" disabled={!wachtwoord || bezig}>
+          {bezig ? 'Openen…' : 'Openen'}
+        </Knop>
+      </form>
     </Sheet>
   )
 }
