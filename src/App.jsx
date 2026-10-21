@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { House, CalendarDays, ListChecks, Ellipsis } from 'lucide-react'
 import { DEELNEMERS } from './config.js'
-import { dagen, ontgrendel } from './lib/kluis.js'
+import { dagen, eerstNodig, ontgrendel } from './lib/kluis.js'
 import { lees, schrijf, wis } from './lib/opslag.js'
 import { heeftViewTransitions, overgang } from './lib/overgang.js'
 import { ONTHULLING_MS, useNu } from './lib/tijd.js'
@@ -33,7 +33,9 @@ export default function App() {
   const [nav, setNav] = useState({ tab: 'start', scherm: null })
   // Ontgrendelde inhoud blijft alleen in het geheugen.
   const [ontgrendeld, setOntgrendeld] = useState({})
-  const [slot, setSlot] = useState(null) // { id, titel }
+  const [slot, setSlot] = useState(null) // { id, titel, daarna }
+  // Het bestemmingswachtwoord is nodig om een dag te openen; alleen in het geheugen.
+  const bestemmingPw = useRef(null)
   const nu = useNu(1000)
   const onthuld = nu >= ONTHULLING_MS
 
@@ -52,6 +54,8 @@ export default function App() {
   const open = useCallback(
     (id, titel) => {
       if (ontgrendeld[id]) return naarTegel(id)
+      // Een dag kan pas als de bestemming open is: eerst dat wachtwoord, dan het dagwachtwoord.
+      if (eerstNodig(id) && !bestemmingPw.current) return setSlot({ id: 'bestemming', titel: 'Eerst de bestemming', daarna: { id, titel } })
       setSlot({ id, titel })
     },
     [ontgrendeld, naarTegel],
@@ -59,6 +63,7 @@ export default function App() {
 
   function uitloggen() {
     wis('naam')
+    bestemmingPw.current = null
     setNaam(null)
     setOntgrendeld({})
     setNav({ tab: 'start', scherm: null })
@@ -132,6 +137,11 @@ export default function App() {
       <SlotSheet
         slot={slot}
         ontgrendeld={ontgrendeld}
+        bestemmingPw={bestemmingPw}
+        onVervolg={(volgende, extra) => {
+          setOntgrendeld((o) => ({ ...o, ...extra }))
+          setSlot(volgende)
+        }}
         onErbij={(extra) => setOntgrendeld((o) => ({ ...o, ...extra }))}
         onSluit={() => setSlot(null)}
         onOpen={(id, extra) => {
@@ -144,7 +154,7 @@ export default function App() {
   )
 }
 
-function SlotSheet({ slot, ontgrendeld, onSluit, onOpen, onErbij }) {
+function SlotSheet({ slot, ontgrendeld, bestemmingPw, onSluit, onOpen, onVervolg, onErbij }) {
   const [wachtwoord, setWachtwoord] = useState('')
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
@@ -162,16 +172,23 @@ function SlotSheet({ slot, ontgrendeld, onSluit, onOpen, onErbij }) {
     setBezig(true)
     setFout('')
     try {
-      const extra = { [slot.id]: await ontgrendel(slot.id, wachtwoord) }
+      const extra = { [slot.id]: await ontgrendel(slot.id, wachtwoord, bestemmingPw.current) }
       const partner = SAMEN[slot.id]
-      if (partner) extra[partner] = await ontgrendel(partner, wachtwoord)
+      if (partner) {
+        extra[partner] = await ontgrendel(partner, wachtwoord)
+        bestemmingPw.current = wachtwoord
+      }
+      if (slot.daarna) {
+        onVervolg(slot.daarna, extra)
+        return
+      }
       onOpen(slot.id, extra)
       // Dagen met hetzelfde wachtwoord gaan meteen mee open (op de achtergrond).
       if (slot.id.startsWith('dag-')) {
         const pw = wachtwoord
         for (const d of dagen) {
           if (d.id === slot.id || ontgrendeld[d.id]) continue
-          ontgrendel(d.id, pw).then((inhoud) => onErbij({ [d.id]: inhoud }), () => {})
+          ontgrendel(d.id, pw, bestemmingPw.current).then((inhoud) => onErbij({ [d.id]: inhoud }), () => {})
         }
       }
     } catch (err) {
@@ -187,7 +204,13 @@ function SlotSheet({ slot, ontgrendeld, onSluit, onOpen, onErbij }) {
   return (
     <Sheet open={!!slot} onSluit={onSluit} titel={slot?.titel}>
       <form onSubmit={versturen}>
-        <p className="mb-4 text-tekst-zacht">Vul het wachtwoord voor dit onderdeel in.</p>
+        <p className="mb-4 text-tekst-zacht">
+          {slot?.daarna
+            ? 'Een dag openen kan pas als de bestemming open is. Vul eerst het wachtwoord van de bestemming in.'
+            : slot?.id.startsWith('dag-')
+              ? 'Vul het wachtwoord voor deze dag in.'
+              : 'Vul het wachtwoord voor dit onderdeel in.'}
+        </p>
         <div className={schud ? 'schud' : ''} onAnimationEnd={() => setSchud(false)}>
           <Veld
             ref={veld}

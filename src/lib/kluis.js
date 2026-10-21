@@ -54,13 +54,17 @@ function controleerBrowser() {
   if (!subtle) throw new Error('Deze browser kan de inhoud niet openen. Gebruik een recente Safari of Chrome.')
 }
 
-// Opent één tegel met het tegelwachtwoord.
-export async function ontgrendel(id, wachtwoord) {
+// Moet eerst een ander onderdeel open (bij de dagen: de bestemming)?
+export const eerstNodig = (id) => kluis.tegels[id]?.eerst ?? null
+
+// Opent één tegel met het tegelwachtwoord (en zo nodig het wachtwoord van wat eerst open moest).
+export async function ontgrendel(id, wachtwoord, eerderWachtwoord = '') {
   controleerBrowser()
   const tegel = kluis.tegels[id]
   if (!tegel?.viaWachtwoord) throw new FoutWachtwoord('Dit onderdeel opent niet met een tegelwachtwoord.')
+  const sleutelTekst = tegel.eerst ? `${normaal(eerderWachtwoord)}\n${normaal(wachtwoord)}` : wachtwoord
   try {
-    const ruw = await open(await afgeleid(wachtwoord, tegel.salt), tegel.viaWachtwoord)
+    const ruw = await open(await afgeleid(sleutelTekst, tegel.salt), tegel.viaWachtwoord)
     return leesTegel(id, ruw)
   } catch {
     throw new FoutWachtwoord('Wachtwoord klopt niet.')

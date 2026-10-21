@@ -48,7 +48,8 @@ const tegels = {
   bestemming: { inhoud: content.bestemming, wachtwoord: 'bestemming' },
   praktisch: { inhoud: content.praktisch, wachtwoord: 'bestemming' },
   organisatie: { inhoud: content.organisatie, wachtwoord: null },
-  ...Object.fromEntries(content.dagen.map((d) => [d.id, { inhoud: d, wachtwoord: d.id }])),
+  // Een dag opent alleen met het bestemmingswachtwoord én het eigen dagwachtwoord samen.
+  ...Object.fromEntries(content.dagen.map((d) => [d.id, { inhoud: d, wachtwoord: d.id, eerst: 'bestemming' }])),
 }
 
 const ontbrekend = [...new Set(Object.values(tegels).map((t) => t.wachtwoord).filter(Boolean))].filter(
@@ -91,7 +92,10 @@ for (const [id, tegel] of Object.entries(tegels)) {
   if (tegel.wachtwoord) {
     const salt = crypto.randomBytes(16)
     item.salt = b64(salt)
-    item.viaWachtwoord = await sluit(await afgeleid(normaal(content.wachtwoorden[tegel.wachtwoord]), salt), ruw)
+    const eigen = normaal(content.wachtwoorden[tegel.wachtwoord])
+    const sleutelTekst = tegel.eerst ? `${normaal(content.wachtwoorden[tegel.eerst])}\n${eigen}` : eigen
+    item.viaWachtwoord = await sluit(await afgeleid(sleutelTekst, salt), ruw)
+    if (tegel.eerst) item.eerst = tegel.eerst
   }
   kluis.tegels[id] = item
 }

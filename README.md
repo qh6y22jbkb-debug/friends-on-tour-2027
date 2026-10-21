@@ -15,7 +15,7 @@ Installeerbare web-app (PWA) voor het vriendenweekend. Hij draait zonder server,
 | Tegel | Opent met |
 |---|---|
 | Bestemming + Praktisch | bestemmingswachtwoord (geen datum; wie het heeft, kan het openen) |
-| Dag 1–4 | eigen dagwachtwoord |
+| Dag 1–4 | eerst het bestemmingswachtwoord, dán het eigen dagwachtwoord (versleuteld met beide samen) |
 | Organisatie | alleen organisatorwachtwoord |
 | Schatkisten (hints) | elk op een eigen datum; organisatoren zien ze altijd |
 | Paklijst | altijd open |
