@@ -7,7 +7,16 @@ const van64 = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0))
 const normaal = (pw) => String(pw).trim().toLowerCase()
 
 export const dagen = kluis.publiek.dagen
-export const hints = kluis.hints
+// Alleen de datums; de tekst wordt pas ontsleuteld als de datum er is.
+export const hints = kluis.hints.map(({ datum }, i) => ({ datum, i }))
+
+export async function leesHint(i) {
+  controleerBrowser()
+  const h = kluis.hints[i]
+  const ruw = await subtle.digest('SHA-256', new TextEncoder().encode('fot-hint:' + h.datum))
+  const sleutel = await subtle.importKey('raw', ruw, 'AES-GCM', false, ['decrypt'])
+  return new TextDecoder().decode(await open(sleutel, h))
+}
 
 async function afgeleid(wachtwoord, salt) {
   const basis = await subtle.importKey('raw', new TextEncoder().encode(normaal(wachtwoord)), 'PBKDF2', false, ['deriveKey'])

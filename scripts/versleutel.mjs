@@ -59,12 +59,24 @@ if (ontbrekend.length) {
   process.exit(1)
 }
 
+// Hints staan niet leesbaar in de app. De sleutel volgt uit de datum: niet waterdicht
+// (zonder server kan dat niet), maar je kunt ze niet meer gewoon in de broncode lezen.
+async function hintSleutel(datum) {
+  const ruw = await subtle.digest('SHA-256', new TextEncoder().encode('fot-hint:' + datum))
+  return subtle.importKey('raw', ruw, 'AES-GCM', false, ['encrypt'])
+}
+async function versleutelHints(lijst) {
+  const uit = []
+  for (const h of lijst) uit.push({ datum: h.datum, ...(await sluit(await hintSleutel(h.datum), new TextEncoder().encode(h.tekst))) })
+  return uit
+}
+
 const orgSalt = crypto.randomBytes(16)
 const orgSleutel = await afgeleid(normaal(codes.organisatorWachtwoord), orgSalt)
 const kluis = {
   rondes: RONDES,
   publiek: { dagen: content.dagen.map((d) => ({ id: d.id, datum: d.datum })) },
-  hints,
+  hints: await versleutelHints(hints),
   org: { salt: b64(orgSalt), controle: await sluit(orgSleutel, new TextEncoder().encode('ok')) },
   tegels: {},
 }
