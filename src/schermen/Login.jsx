@@ -1,20 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { DEELNEMERS, TITEL } from '../config.js'
-import { ontgrendelAlles } from '../lib/kluis.js'
+import { controleerLogin, heeftLogin, ontgrendelAlles } from '../lib/kluis.js'
 import { overgang } from '../lib/overgang.js'
 import { Avatar, Blok, Fout, Knop, Kop, Rij, Veld } from '../ui.jsx'
 
 export default function Login({ onGekozen }) {
-  const [org, setOrg] = useState(null)
+  const [gekozen, setGekozen] = useState(null)
 
   function kies(d) {
-    if (d.rol === 'organisator') overgang(() => setOrg(d.naam))
+    if (d.rol === 'organisator' || heeftLogin(d.naam)) overgang(() => setGekozen(d))
     else onGekozen(d.naam)
   }
+  const terug = () => overgang(() => setGekozen(null))
 
   return (
     <Scherm>
-      {!org ? (
+      {!gekozen ? (
         <>
           <Kop titel="Wie ben jij?" sub="Kies je naam om verder te gaan." />
           <Blok>
@@ -30,11 +31,16 @@ export default function Login({ onGekozen }) {
             ))}
           </Blok>
         </>
+      ) : gekozen.rol === 'organisator' ? (
+        <OrganisatorFormulier naam={gekozen.naam} terug={terug} onOpen={(alles) => onGekozen(gekozen.naam, alles)} />
       ) : (
-        <OrganisatorFormulier
-          naam={org}
-          terug={() => overgang(() => setOrg(null))}
-          onOpen={(alles) => onGekozen(org, alles)}
+        <WachtwoordFormulier
+          naam={gekozen.naam}
+          terug={terug}
+          uitleg="Vul je eigen wachtwoord in."
+          placeholder="Wachtwoord"
+          controle={(pw) => controleerLogin(gekozen.naam, pw)}
+          onGoed={() => onGekozen(gekozen.naam)}
         />
       )}
     </Scherm>
@@ -60,6 +66,19 @@ function Scherm({ children }) {
 }
 
 function OrganisatorFormulier({ naam, terug, onOpen }) {
+  return (
+    <WachtwoordFormulier
+      naam={naam}
+      terug={terug}
+      uitleg="Vul het organisatorwachtwoord in. Dat opent alles."
+      placeholder="Organisatorwachtwoord"
+      controle={ontgrendelAlles}
+      onGoed={onOpen}
+    />
+  )
+}
+
+function WachtwoordFormulier({ naam, terug, uitleg, placeholder, controle, onGoed }) {
   const [wachtwoord, setWachtwoord] = useState('')
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
@@ -72,7 +91,7 @@ function OrganisatorFormulier({ naam, terug, onOpen }) {
     setBezig(true)
     setFout('')
     try {
-      onOpen(await ontgrendelAlles(wachtwoord))
+      onGoed(await controle(wachtwoord))
     } catch (err) {
       setFout(err.message)
       setWachtwoord('')
@@ -85,21 +104,24 @@ function OrganisatorFormulier({ naam, terug, onOpen }) {
 
   return (
     <form onSubmit={versturen}>
-      <Avatar naam={naam} maat={72} className="mb-4" />
-      <Kop titel={`Hoi ${naam}`} sub="Vul het organisatorwachtwoord in. Dat opent alles." terug={terug} />
+      <Kop titel={`Hoi ${naam}`} terug={terug} />
+      <div className="mb-6 flex flex-col items-center gap-3 text-center">
+        <Avatar naam={naam} maat={96} />
+        <p className="text-tekst-zacht">{uitleg}</p>
+      </div>
       <div className={schud ? 'schud' : ''} onAnimationEnd={() => setSchud(false)}>
         <Veld
           ref={veld}
           type="password"
           value={wachtwoord}
           onChange={(e) => setWachtwoord(e.target.value)}
-          placeholder="Organisatorwachtwoord"
+          placeholder={placeholder}
           autoComplete="current-password"
         />
       </div>
       <Fout>{fout}</Fout>
       <Knop className="mt-4 w-full" disabled={!wachtwoord || bezig}>
-        {bezig ? 'Openen…' : 'Openen'}
+        {bezig ? 'Controleren…' : 'Inloggen'}
       </Knop>
     </form>
   )

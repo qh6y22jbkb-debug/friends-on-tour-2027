@@ -84,5 +84,14 @@ for (const [id, tegel] of Object.entries(tegels)) {
   kluis.tegels[id] = item
 }
 
+// Inlogwachtwoorden van deelnemers: alleen een PBKDF2-hash met salt, nooit het wachtwoord zelf.
+kluis.login = {}
+for (const [naam, wachtwoord] of Object.entries(codes.deelnemerWachtwoorden ?? {})) {
+  const salt = crypto.randomBytes(16)
+  const basis = await subtle.importKey('raw', new TextEncoder().encode(normaal(wachtwoord)), 'PBKDF2', false, ['deriveBits'])
+  const bits = await subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: RONDES }, basis, 256)
+  kluis.login[naam] = { salt: b64(salt), hash: b64(bits) }
+}
+
 fs.writeFileSync(UIT, JSON.stringify(kluis))
 console.log(`🔒 ${UIT} gemaakt (${Object.keys(kluis.tegels).length} tegels versleuteld, ${hints.length} hints).`)

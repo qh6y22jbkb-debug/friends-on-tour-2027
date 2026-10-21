@@ -29,6 +29,18 @@ async function leesTegel(id, ruweSleutel) {
 
 export class FoutWachtwoord extends Error {}
 
+// Heeft deze deelnemer een eigen inlogwachtwoord?
+export const heeftLogin = (naam) => Boolean(kluis.login?.[naam])
+
+export async function controleerLogin(naam, wachtwoord) {
+  controleerBrowser()
+  const { salt, hash } = kluis.login[naam]
+  const basis = await subtle.importKey('raw', new TextEncoder().encode(normaal(wachtwoord)), 'PBKDF2', false, ['deriveBits'])
+  const bits = await subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: van64(salt), iterations: kluis.rondes }, basis, 256)
+  const gegeven = btoa(String.fromCharCode(...new Uint8Array(bits)))
+  if (gegeven !== hash) throw new FoutWachtwoord('Wachtwoord klopt niet.')
+}
+
 function controleerBrowser() {
   if (!subtle) throw new Error('Deze browser kan de inhoud niet openen. Gebruik een recente Safari of Chrome.')
 }
