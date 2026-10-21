@@ -1,4 +1,4 @@
-import { CalendarDays, CircleAlert, Lock } from 'lucide-react'
+import { CalendarDays, CircleAlert, ExternalLink, Lock } from 'lucide-react'
 import { Blok, Kop, Rij } from '../ui.jsx'
 
 export default function Programma({ dagen, ontgrendeld, open }) {
@@ -37,6 +37,23 @@ export function Dag({ dag, terug }) {
           </div>
         ))}
       </Blok>
+      {dag.links?.length > 0 && (
+        <Blok titel="Links">
+          {dag.links.map((l, i) => (
+            <a
+              key={l.url}
+              href={l.url}
+              target="_blank"
+              rel="noreferrer"
+              style={{ '--i': dag.items.length + i }}
+              className="opkomen flex min-h-12 items-center gap-3 border-b border-rand px-4 py-3 text-accent last:border-b-0 active:bg-vlak-zacht"
+            >
+              <span className="flex-1">{l.tekst}</span>
+              <ExternalLink size={18} strokeWidth={1.75} className="shrink-0" />
+            </a>
+          ))}
+        </Blok>
+      )}
       {dag.notitie && (
         <div className="opkomen flex gap-3 rounded-xl border border-rand bg-vlak-zacht p-4" style={{ '--i': dag.items.length }}>
           <CircleAlert size={20} strokeWidth={1.75} className="mt-0.5 shrink-0 text-accent" />

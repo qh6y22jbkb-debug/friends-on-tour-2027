@@ -2,53 +2,138 @@
   {
     "groep": "Documenten",
     "items": [
-      { "id": "doc-id", "tekst": "Geldig identiteitsbewijs" },
-      { "id": "doc-bank", "tekst": "Bankpas" },
-      { "id": "doc-cash", "tekst": "Wat contant geld" },
-      { "id": "doc-verzekering", "tekst": "Gegevens reisverzekering" },
-      { "id": "doc-zorgpas", "tekst": "Zorgpas" }
+      {
+        "id": "doc-id",
+        "tekst": "Geldig identiteitsbewijs"
+      },
+      {
+        "id": "doc-bank",
+        "tekst": "Bankpas"
+      },
+      {
+        "id": "doc-cash",
+        "tekst": "Wat contant geld"
+      },
+      {
+        "id": "doc-verzekering",
+        "tekst": "Gegevens reisverzekering"
+      },
+      {
+        "id": "doc-zorgpas",
+        "tekst": "Zorgpas"
+      }
     ]
   },
   {
     "groep": "Kleding",
     "items": [
-      { "id": "kl-shirts", "tekst": "T-shirts" },
-      { "id": "kl-broek", "tekst": "Broek of jeans" },
-      { "id": "kl-trui", "tekst": "Trui of vest" },
-      { "id": "kl-ondergoed", "tekst": "Ondergoed en sokken" },
-      { "id": "kl-net", "tekst": "Nette outfit voor een avond uit" },
-      { "id": "kl-slapen", "tekst": "Slaapkleding" },
-      { "id": "kl-schoenen", "tekst": "Comfortabele schoenen" }
+      {
+        "id": "kl-shirts",
+        "tekst": "T-shirts"
+      },
+      {
+        "id": "kl-broek",
+        "tekst": "Broek of jeans"
+      },
+      {
+        "id": "kl-trui",
+        "tekst": "Trui of vest"
+      },
+      {
+        "id": "kl-ondergoed",
+        "tekst": "Ondergoed en sokken"
+      },
+      {
+        "id": "kl-net",
+        "tekst": "Nette outfit voor een avond uit"
+      },
+      {
+        "id": "kl-slapen",
+        "tekst": "Slaapkleding"
+      },
+      {
+        "id": "kl-zwembroek",
+        "tekst": "Zwembroek (vergeet hem vooral niet!)"
+      },
+      {
+        "id": "kl-schoenen",
+        "tekst": "Comfortabele schoenen"
+      }
     ]
   },
   {
     "groep": "Verzorging",
     "items": [
-      { "id": "vz-tanden", "tekst": "Tandenborstel en tandpasta" },
-      { "id": "vz-deo", "tekst": "Deodorant" },
-      { "id": "vz-douche", "tekst": "Shampoo en douchegel (kleine flesjes)" },
-      { "id": "vz-scheren", "tekst": "Scheerspullen" },
-      { "id": "vz-medicijnen", "tekst": "Persoonlijke medicijnen" },
-      { "id": "vz-ehbo", "tekst": "Paracetamol en pleisters" }
+      {
+        "id": "vz-tanden",
+        "tekst": "Tandenborstel en tandpasta"
+      },
+      {
+        "id": "vz-deo",
+        "tekst": "Deodorant"
+      },
+      {
+        "id": "vz-douche",
+        "tekst": "Shampoo en douchegel (kleine flesjes)"
+      },
+      {
+        "id": "vz-scheren",
+        "tekst": "Scheerspullen"
+      },
+      {
+        "id": "vz-medicijnen",
+        "tekst": "Persoonlijke medicijnen"
+      },
+      {
+        "id": "vz-ehbo",
+        "tekst": "Paracetamol en pleisters"
+      }
     ]
   },
   {
     "groep": "Elektronica",
     "items": [
-      { "id": "el-telefoon", "tekst": "Telefoon en oplader" },
-      { "id": "el-powerbank", "tekst": "Powerbank" },
-      { "id": "el-oortjes", "tekst": "Oortjes" },
-      { "id": "el-kabels", "tekst": "Extra kabels" }
+      {
+        "id": "el-telefoon",
+        "tekst": "Telefoon en oplader"
+      },
+      {
+        "id": "el-powerbank",
+        "tekst": "Powerbank"
+      },
+      {
+        "id": "el-oortjes",
+        "tekst": "Oortjes"
+      },
+      {
+        "id": "el-kabels",
+        "tekst": "Extra kabels"
+      }
     ]
   },
   {
     "groep": "Overig",
     "items": [
-      { "id": "ov-tas", "tekst": "Kleine dagtas" },
-      { "id": "ov-fles", "tekst": "Navulbare waterfles" },
-      { "id": "ov-spel", "tekst": "Kaartspel" },
-      { "id": "ov-snacks", "tekst": "Snacks voor onderweg" },
-      { "id": "ov-oordopjes", "tekst": "Oordopjes" }
+      {
+        "id": "ov-tas",
+        "tekst": "Kleine dagtas"
+      },
+      {
+        "id": "ov-fles",
+        "tekst": "Navulbare waterfles"
+      },
+      {
+        "id": "ov-spel",
+        "tekst": "Kaartspel"
+      },
+      {
+        "id": "ov-snacks",
+        "tekst": "Snacks voor onderweg"
+      },
+      {
+        "id": "ov-oordopjes",
+        "tekst": "Oordopjes"
+      }
     ]
   }
 ]

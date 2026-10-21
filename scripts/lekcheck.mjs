@@ -24,10 +24,10 @@ function voegToe(w) {
 
 if (fs.existsSync('secret/content.json')) {
   const c = JSON.parse(fs.readFileSync('secret/content.json', 'utf8'))
-  voegToe(c.bestemming?.plaats)
-  voegToe(c.praktisch?.adres?.naam)
   // Alleen namen (met hoofdletter), geen gewone woorden als "centrum".
-  const ALGEMEEN = new Set(['centrum', 'straat', 'plein', 'appartement', 'hotel', 'precies', 'adres'])
+  const ALGEMEEN = new Set(['centrum', 'straat', 'plein', 'appartement', 'hotel', 'precies', 'adres', 'invullen'])
+  voegToe(c.bestemming?.plaats)
+  if (!ALGEMEEN.has(normaal(c.praktisch?.adres?.naam || ''))) voegToe(c.praktisch?.adres?.naam)
   const namen = `${c.bestemming?.regio || ''} ${c.praktisch?.adres?.adres || ''}`
   for (const deel of namen.split(/[\s,()·]+/)) {
     if (deel.length >= 5 && /^\p{Lu}/u.test(deel) && !/\d/.test(deel) && !ALGEMEEN.has(normaal(deel))) voegToe(deel)
