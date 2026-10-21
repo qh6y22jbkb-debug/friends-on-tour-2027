@@ -38,6 +38,19 @@ async function leesTegel(id, ruweSleutel) {
 
 export class FoutWachtwoord extends Error {}
 
+async function leesMissieData(m, ruweSleutel) {
+  const sleutel = await subtle.importKey('raw', ruweSleutel, 'AES-GCM', false, ['decrypt'])
+  return JSON.parse(new TextDecoder().decode(await open(sleutel, m.data)))
+}
+
+// De eigen missie, te openen met het eigen inlogwachtwoord. Geen missie: null.
+export async function leesMissie(naam, wachtwoord) {
+  const m = kluis.missies?.[naam]
+  if (!m) return null
+  const ruw = await open(await afgeleid(wachtwoord, m.salt), m.viaWachtwoord)
+  return leesMissieData(m, ruw)
+}
+
 // Heeft deze deelnemer een eigen inlogwachtwoord?
 export const heeftLogin = (naam) => Boolean(kluis.login?.[naam])
 
@@ -84,6 +97,10 @@ export async function ontgrendelAlles(wachtwoord) {
   const alles = {}
   for (const [id, tegel] of Object.entries(kluis.tegels)) {
     alles[id] = await leesTegel(id, await open(sleutel, tegel.viaOrg))
+  }
+  alles.missies = {}
+  for (const [naam, m] of Object.entries(kluis.missies ?? {})) {
+    alles.missies[naam] = await leesMissieData(m, await open(sleutel, m.viaOrg))
   }
   return alles
 }

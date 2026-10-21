@@ -3,7 +3,7 @@ import { lees, schrijf } from '../lib/opslag.js'
 import { mooieDatum } from '../lib/tijd.js'
 import { Blok, Kop, Link, Regels, Teller, Vinkrij, Voortgang } from '../ui.jsx'
 
-export default function Organisatie({ inhoud, terug }) {
+export default function Organisatie({ inhoud, missies, terug }) {
   const [klaarSet, setKlaarSet] = useState(() => new Set(lees('organisatie-klaar', [])))
   if (!inhoud) return <Kop titel="Niet geopend" terug={terug} />
 
@@ -56,6 +56,21 @@ export default function Organisatie({ inhoud, terug }) {
         <Blok titel="Actiepunten">
           {inhoud.actiepunten.map((a) => (
             <Vinkrij key={a.id} i={i++} aan={klaarSet.has(a.id)} onWissel={() => wissel(a.id)} titel={a.tekst} sub={a.wanneer} />
+          ))}
+        </Blok>
+      )}
+
+      {missies && Object.keys(missies).length > 0 && (
+        <Blok titel="Missies">
+          {Object.entries(missies).map(([wie, m]) => (
+            <Vinkrij
+              key={wie}
+              i={i++}
+              aan={klaarSet.has('missie-' + wie)}
+              onWissel={() => wissel('missie-' + wie)}
+              titel={`${wie}: ${m.titel}`}
+              sub={(m.tekst[1] ?? '').replace(/^Jouw missie: (.)/, (_, letter) => letter.toUpperCase())}
+            />
           ))}
         </Blok>
       )}

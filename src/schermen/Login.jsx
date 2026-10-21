@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { DEELNEMERS, TITEL } from '../config.js'
-import { controleerLogin, heeftLogin, ontgrendelAlles } from '../lib/kluis.js'
+import { controleerLogin, heeftLogin, leesMissie, ontgrendelAlles } from '../lib/kluis.js'
 import { overgang } from '../lib/overgang.js'
 import { Avatar, Blok, Fout, Knop, Kop, Rij, Veld } from '../ui.jsx'
 
@@ -39,8 +39,11 @@ export default function Login({ onGekozen }) {
           terug={terug}
           uitleg="Vul je eigen wachtwoord in."
           placeholder="Wachtwoord"
-          controle={(pw) => controleerLogin(gekozen.naam, pw)}
-          onGoed={() => onGekozen(gekozen.naam)}
+          controle={async (pw) => {
+            await controleerLogin(gekozen.naam, pw)
+            return leesMissie(gekozen.naam, pw)
+          }}
+          onGoed={(missie) => onGekozen(gekozen.naam, null, missie)}
         />
       )}
     </Scherm>

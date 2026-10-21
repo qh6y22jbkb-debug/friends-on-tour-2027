@@ -1,7 +1,9 @@
-import { ClipboardList, Gem, LifeBuoy, LogOut, MapPin } from 'lucide-react'
+import { ClipboardList, Gem, LifeBuoy, LogOut, MapPin, Target } from 'lucide-react'
+import { lees } from '../lib/opslag.js'
 import { Avatar, Blok, Kop, Rij } from '../ui.jsx'
 
-export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen }) {
+export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen, onMissie }) {
+  const missie = lees('missie-' + naam)
   let i = 0
   return (
     <>
@@ -14,6 +16,7 @@ export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen }) {
         </div>
       </div>
       <Blok>
+        {missie && <Rij i={i++} icoon={Target} titel="Mijn missie" sub={missie.titel} onClick={onMissie} />}
         {isOrg && (
           <Rij i={i++} icoon={ClipboardList} titel="Organisatie" onClick={() => ga({ scherm: { soort: 'organisatie' } })} />
         )}

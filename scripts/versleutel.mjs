@@ -109,5 +109,24 @@ for (const [naam, wachtwoord] of Object.entries(codes.deelnemerWachtwoorden ?? {
   kluis.login[naam] = { salt: b64(salt), hash: b64(bits) }
 }
 
+// Missies: elke missie opent alleen met het inlogwachtwoord van die persoon (of het organisatorwachtwoord).
+kluis.missies = {}
+for (const [naam, missie] of Object.entries(content.missies ?? {})) {
+  const wachtwoord = codes.deelnemerWachtwoorden?.[naam]
+  if (!wachtwoord) {
+    console.warn(`⚠️  ${naam} heeft geen inlogwachtwoord, dus de missie wordt overgeslagen.`)
+    continue
+  }
+  const ruw = crypto.randomBytes(32)
+  const missieSleutel = await subtle.importKey('raw', ruw, 'AES-GCM', false, ['encrypt'])
+  const salt = crypto.randomBytes(16)
+  kluis.missies[naam] = {
+    data: await sluit(missieSleutel, new TextEncoder().encode(JSON.stringify(missie))),
+    viaOrg: await sluit(orgSleutel, ruw),
+    salt: b64(salt),
+    viaWachtwoord: await sluit(await afgeleid(normaal(wachtwoord), salt), ruw),
+  }
+}
+
 fs.writeFileSync(UIT, JSON.stringify(kluis))
 console.log(`🔒 ${UIT} gemaakt (${Object.keys(kluis.tegels).length} tegels versleuteld, ${hints.length} hints).`)

@@ -34,6 +34,7 @@ export default function App() {
   // Ontgrendelde inhoud blijft alleen in het geheugen.
   const [ontgrendeld, setOntgrendeld] = useState({})
   const [slot, setSlot] = useState(null) // { id, titel, daarna }
+  const [missie, setMissie] = useState(null)
   // Het bestemmingswachtwoord is nodig om een dag te openen; alleen in het geheugen.
   const bestemmingPw = useRef(null)
   const nu = useNu(1000)
@@ -72,12 +73,14 @@ export default function App() {
   if (!persoon) {
     return (
       <Login
-        onGekozen={(n, alles) => {
+        onGekozen={(n, alles, eigenMissie) => {
           schrijf('naam', n)
+          if (eigenMissie) schrijf('missie-' + n, eigenMissie)
           overgang(() => {
             setNaam(n)
             if (alles) setOntgrendeld(alles)
           })
+          if (eigenMissie) setTimeout(() => setMissie(eigenMissie), 500)
         }}
       />
     )
@@ -96,12 +99,12 @@ export default function App() {
   if (s?.soort === 'bestemming') inhoud = <Bestemming {...gedeeld} inhoud={ontgrendeld.bestemming} />
   else if (s?.soort === 'dag') inhoud = <Dag {...gedeeld} dag={ontgrendeld[s.id]} />
   else if (s?.soort === 'praktisch') inhoud = <Praktisch {...gedeeld} inhoud={ontgrendeld.praktisch} />
-  else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} inhoud={ontgrendeld.organisatie} />
+  else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} inhoud={ontgrendeld.organisatie} missies={ontgrendeld.missies} />
   else if (s?.soort === 'hints') inhoud = <Hints {...gedeeld} />
   else if (nav.tab === 'start') inhoud = <Start {...gedeeld} />
   else if (nav.tab === 'programma') inhoud = <Programma {...gedeeld} />
   else if (nav.tab === 'paklijst') inhoud = <Paklijst {...gedeeld} />
-  else inhoud = <Meer {...gedeeld} onUitloggen={uitloggen} />
+  else inhoud = <Meer {...gedeeld} onUitloggen={uitloggen} onMissie={() => setMissie(lees('missie-' + naam))} />
 
   const sleutel = `${nav.tab}-${s?.soort ?? ''}-${s?.id ?? ''}`
 
@@ -133,6 +136,8 @@ export default function App() {
           })}
         </div>
       </nav>
+
+      <MissiePopup missie={missie} onSluit={() => setMissie(null)} />
 
       <SlotSheet
         slot={slot}
@@ -227,6 +232,32 @@ function SlotSheet({ slot, ontgrendeld, bestemmingPw, onSluit, onOpen, onVervolg
           {bezig ? 'Openen…' : 'Openen'}
         </Knop>
       </form>
+    </Sheet>
+  )
+}
+
+// Pop-up met de geheime missie, direct na het inloggen (en later via Meer).
+function MissiePopup({ missie, onSluit }) {
+  return (
+    <Sheet open={!!missie} onSluit={onSluit} titel="Je geheime missie">
+      {missie && (
+        <>
+          <div className="mb-4 rounded-[24px] bg-accent p-5 text-op-accent">
+            <p className="text-sm font-semibold opacity-80">Jouw rol</p>
+            <p className="text-2xl font-extrabold">{missie.titel}</p>
+          </div>
+          <div className="max-h-[45dvh] space-y-3 overflow-y-auto">
+            {missie.tekst.map((alinea, i) => (
+              <p key={i} style={{ '--i': i }} className={`opkomen ${i === 0 || alinea.startsWith('Let op') ? 'font-semibold' : ''}`}>
+                {alinea}
+              </p>
+            ))}
+          </div>
+          <Knop className="mt-5 w-full" onClick={onSluit}>
+            Missie aanvaard
+          </Knop>
+        </>
+      )}
     </Sheet>
   )
 }
