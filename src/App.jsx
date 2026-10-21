@@ -131,6 +131,8 @@ export default function App() {
 
       <SlotSheet
         slot={slot}
+        ontgrendeld={ontgrendeld}
+        onErbij={(extra) => setOntgrendeld((o) => ({ ...o, ...extra }))}
         onSluit={() => setSlot(null)}
         onOpen={(id, extra) => {
           setOntgrendeld((o) => ({ ...o, ...extra }))
@@ -142,7 +144,7 @@ export default function App() {
   )
 }
 
-function SlotSheet({ slot, onSluit, onOpen }) {
+function SlotSheet({ slot, ontgrendeld, onSluit, onOpen, onErbij }) {
   const [wachtwoord, setWachtwoord] = useState('')
   const [fout, setFout] = useState('')
   const [bezig, setBezig] = useState(false)
@@ -164,6 +166,14 @@ function SlotSheet({ slot, onSluit, onOpen }) {
       const partner = SAMEN[slot.id]
       if (partner) extra[partner] = await ontgrendel(partner, wachtwoord)
       onOpen(slot.id, extra)
+      // Dagen met hetzelfde wachtwoord gaan meteen mee open (op de achtergrond).
+      if (slot.id.startsWith('dag-')) {
+        const pw = wachtwoord
+        for (const d of dagen) {
+          if (d.id === slot.id || ontgrendeld[d.id]) continue
+          ontgrendel(d.id, pw).then((inhoud) => onErbij({ [d.id]: inhoud }), () => {})
+        }
+      }
     } catch (err) {
       setFout(err.message)
       setSchud(false)
