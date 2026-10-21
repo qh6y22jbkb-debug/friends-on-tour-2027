@@ -1,4 +1,4 @@
-import { Backpack, ClipboardList, LifeBuoy, Lightbulb, Lock } from 'lucide-react'
+import { Backpack, ClipboardList, Gem, LifeBuoy, Lock } from 'lucide-react'
 import { TITEL } from '../config.js'
 import { dagInfo, datumAmsterdam, resterend } from '../lib/tijd.js'
 import { Avatar, Sectiekop, Tegel } from '../ui.jsx'
@@ -101,9 +101,9 @@ export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrende
         <Tegel
           i={i++}
           tint={isOrg ? 'zand' : 'salie'}
-          icoon={Lightbulb}
-          titel="Hints"
-          sub="Om de paar dagen een nieuwe"
+          icoon={Gem}
+          titel="Schatkisten"
+          sub="3 hints, elk op een eigen datum"
           voet="Altijd"
           breed={!isOrg}
           onClick={() => ga({ scherm: { soort: 'hints' } })}

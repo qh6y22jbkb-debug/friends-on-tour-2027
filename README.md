@@ -17,7 +17,8 @@ Installeerbare web-app (PWA) voor het vriendenweekend. Hij draait zonder server,
 | Bestemming + Praktisch | bestemmingswachtwoord (pas uitdelen op 28 april) |
 | Dag 1–4 | eigen dagwachtwoord |
 | Organisatie | alleen organisatorwachtwoord |
-| Paklijst, Hints | altijd open |
+| Schatkisten (hints) | elk op een eigen datum; organisatoren zien ze altijd |
+| Paklijst | altijd open |
 
 Deelnemers loggen in met hun eigen wachtwoord (`deelnemerWachtwoorden` in `secret/codes.json`); daarna onthoudt hun telefoon wie ze zijn. In de app staat alleen een hash (PBKDF2 met salt), nooit het wachtwoord zelf. Het inlogwachtwoord voorkomt dat iemand als een ander inlogt; het opent zelf geen geheime inhoud. Organisatoren (in `src/config.js`) vullen na het kiezen van hun naam het organisatorwachtwoord in. Dat opent alles. Ontgrendelde inhoud wordt nergens bewaard: na herladen vul je het opnieuw in. Alleen je naam en je vinkjes (paklijst, organisatie) onthoudt de app, op je eigen telefoon.
 
@@ -43,7 +44,7 @@ cp secret/hints.example.json secret/hints.json
 ```
 
 - **`content.json`** bevat `bestemming`, `dagen` (id, datum, titel, items, notitie), `organisatie` (heen, terug, verblijf, terPlekke, kosten, boekingen, actiepunten), `praktisch` (adres, noodnummers, contacten) en `wachtwoorden` (`bestemming`, `dag-1`, `dag-2`, …). Hoofdletters en spaties aan begin/eind tellen niet mee.
-- **`hints.json`** bevat een lijst `{ "datum": "JJJJ-MM-DD", "tekst": "…" }`. Hints staan niet versleuteld in de app en tonen vanaf hun datum. Ze zijn bedoeld als dwaalspoor; zet er niets echts in.
+- **`hints.json`** bevat een lijst `{ "datum": "JJJJ-MM-DD", "tekst": "…" }`. Elke hint wordt een schatkist die op die datum (00:00, Amsterdamse tijd) opengaat. De tekst staat versleuteld in de app; zonder server is dat niet waterdicht, dus de datum volgt de klok van de telefoon.
 - **`secret/codes.json`** wordt de eerste keer automatisch gemaakt, met het organisatorwachtwoord. Voeg hier ook `deelnemerWachtwoorden` toe, bijvoorbeeld `{ "Tico": "…" }`. Hoofdletters en spaties aan begin/eind tellen niet mee.
 - **`secret/lekwoorden.txt`** (optioneel) bevat woorden die nooit in de app mogen staan, voor de lekcheck.
 

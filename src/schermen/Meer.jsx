@@ -1,4 +1,4 @@
-import { ClipboardList, LifeBuoy, Lightbulb, LogOut, MapPin } from 'lucide-react'
+import { ClipboardList, Gem, LifeBuoy, LogOut, MapPin } from 'lucide-react'
 import { Avatar, Blok, Kop, Rij } from '../ui.jsx'
 
 export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen }) {
@@ -31,7 +31,7 @@ export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen }) {
           sub={onthuld || isOrg ? null : 'Opent 28 april 2027'}
           onClick={() => open('praktisch', 'Praktisch')}
         />
-        <Rij i={i++} icoon={Lightbulb} titel="Hints" onClick={() => ga({ scherm: { soort: 'hints' } })} />
+        <Rij i={i++} icoon={Gem} titel="Schatkisten" onClick={() => ga({ scherm: { soort: 'hints' } })} />
       </Blok>
       <Blok>
         <Rij i={i++} icoon={LogOut} titel="Andere naam kiezen" onClick={onUitloggen} pijl={false} />
