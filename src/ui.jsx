@@ -9,6 +9,7 @@ export function Kop({ titel, sub, terug }) {
     <header className="mb-6">
       {terug && (
         <button
+          type="button"
           onClick={terug}
           className="-ml-2 mb-2 flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-medium text-tekst-zacht active:bg-vlak-zacht"
         >
@@ -40,6 +41,7 @@ export function Rij({ icoon: Icoon, titel, sub, rechts, onClick, i = 0, pijl = !
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag
+      type={onClick ? 'button' : undefined}
       onClick={onClick}
       style={{ '--i': i }}
       className="opkomen flex min-h-12 w-full items-center gap-3 border-b border-rand px-4 py-3 text-left last:border-b-0 active:bg-vlak-zacht"
@@ -87,6 +89,7 @@ export function Link({ href, children = 'Openen' }) {
 export function Tegel({ icoon: Icoon, titel, sub, slot, onClick, i = 0, breed }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{ '--i': i }}
       className={`opkomen flex min-h-28 flex-col items-start rounded-xl border border-rand bg-vlak p-4 text-left transition-transform duration-150 active:scale-[0.98] ${
@@ -147,6 +150,7 @@ export function Laden() {
 export function Vinkrij({ aan, onWissel, titel, sub, i = 0 }) {
   return (
     <button
+      type="button"
       role="checkbox"
       aria-checked={aan}
       onClick={onWissel}

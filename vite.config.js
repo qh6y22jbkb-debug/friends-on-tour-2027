@@ -3,7 +3,11 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// GitHub Pages zet de app onder /<reponaam>/.
+const BASIS = '/friends-on-tour-2027/'
+
 export default defineConfig({
+  base: BASIS,
   plugins: [
     react(),
     tailwindcss(),
@@ -15,7 +19,8 @@ export default defineConfig({
         short_name: 'Friends on Tour',
         description: "Een weekend weg met z'n vijven.",
         lang: 'nl',
-        start_url: '/',
+        start_url: BASIS,
+        scope: BASIS,
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#f6f6f4',
@@ -26,14 +31,6 @@ export default defineConfig({
           { src: 'icoon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
-      workbox: {
-        // De API mag nooit uit de cache komen: geheime data alleen live van de server.
-        navigateFallbackDenylist: [/^\/api\//],
-        runtimeCaching: [],
-      },
     }),
   ],
-  server: {
-    proxy: { '/api': 'http://localhost:8787' },
-  },
 })

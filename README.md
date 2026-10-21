@@ -1,36 +1,39 @@
 # Friends on Tour 2027
 
-Installeerbare web-app (PWA) voor het vriendenweekend. De bestemming blijft geheim tot **28 april 2027, 00:00** (Amsterdamse tijd).
+Installeerbare web-app (PWA) voor het vriendenweekend. Hij draait zonder server, gratis op GitHub Pages. De bestemming blijft geheim tot **28 april 2027**.
 
-**Stack:** Vite + React + Tailwind + Lucide-iconen. Eén Cloudflare Worker serveert de app, controleert alles en bewaart gedeelde gegevens in KV.
+**Stack:** Vite + React + Tailwind + Lucide-iconen. Geen backend, geen database.
 
-## Hoe de beveiliging werkt
+## Hoe het slot werkt
 
-- Iedereen kiest zijn naam en maakt de eerste keer een eigen wachtwoord. Dat wordt gehasht opgeslagen (PBKDF2 met salt). Na 8 foute pogingen volgt een kwartier pauze.
-- Alle geheime inhoud staat in `secret/content.json`. Dat bestand staat in `.gitignore` en komt nooit in de app-code. Het gaat als *secret* naar Cloudflare; de tegelwachtwoorden worden daarbij eerst gehasht.
-- De server levert inhoud pas als alles klopt: sessie, rol, tegelwachtwoord en servertijd. De telefoonklok verzetten heeft dus geen zin.
-- Ontgrendelde inhoud wordt niet op de telefoon opgeslagen. Na herladen ontgrendel je opnieuw.
+- Alle geheime inhoud staat in `secret/content.json`. Dat bestand staat in `.gitignore`.
+- Bij elke build maakt `scripts/versleutel.mjs` daar een versleutelde kluis van (`src/kluis.json`, ook gitignored). Elke tegel krijgt een eigen AES-256-sleutel, die alleen opengaat met het tegelwachtwoord of het organisatorwachtwoord (PBKDF2, 310.000 rondes).
+- In de broncode of de gebouwde app staat dus niets leesbaars. Zonder wachtwoord is de inhoud niet te openen.
+- **Belangrijk:** zonder server kan de app de datum niet afdwingen. Het **bestemmingswachtwoord is het echte slot**: deel het pas uit op 28 april. De aftelklok en de melding "opent 28 april" zijn alleen ter info.
+- Er is geen limiet op het aantal pogingen, dus gebruik lange wachtwoorden (bijv. `molen-vos-431`).
 
-| Tegel | Deelnemer | Organisator |
-|---|---|---|
-| Bestemming | wachtwoord **én** na 28 april | altijd |
-| Dag 1–4 | eigen wachtwoord (ook vóór 28 april) | altijd |
-| Praktisch | na 28 april | altijd |
-| Organisatie | — | altijd |
-| Paklijst, Kosten, Hints | altijd | altijd |
+| Tegel | Opent met |
+|---|---|
+| Bestemming + Praktisch | bestemmingswachtwoord (pas uitdelen op 28 april) |
+| Dag 1–4 | eigen dagwachtwoord |
+| Organisatie | alleen organisatorwachtwoord |
+| Paklijst, Hints | altijd open |
 
-Namen en rollen staan in `src/config.js`.
+Organisatoren (in `src/config.js`) vullen na het kiezen van hun naam het organisatorwachtwoord in. Dat opent alles. Ontgrendelde inhoud wordt nergens bewaard: na herladen vul je het opnieuw in. Alleen je naam en je vinkjes (paklijst, organisatie) onthoudt de app, op je eigen telefoon.
 
 ## 1. Lokaal draaien
 
 ```bash
 npm install
-npm run geheim:lokaal   # maakt .dev.vars (en secret/codes.json); nepdata als content.json ontbreekt
-npm run build
-npm run worker          # app + API op http://localhost:8787
+npm run dev        # http://localhost:5173/friends-on-tour-2027/
 ```
 
-Na een wijziging in de code: `npm run build`, daarna de pagina verversen. Lokale testgegevens (wachtwoorden, kosten, vinkjes) staan in `.wrangler/state`. Gooi die map weg om opnieuw te beginnen.
+Of bekijk de gebouwde versie zoals hij online komt:
+
+```bash
+npm run build
+npm run preview    # http://localhost:4180/friends-on-tour-2027/
+```
 
 ## 2. Geheime inhoud invullen
 
@@ -39,40 +42,32 @@ cp secret/content.example.json secret/content.json
 cp secret/hints.example.json secret/hints.json
 ```
 
-- **`content.json`** bevat `bestemming`, `dagen` (id, datum, titel, items, notitie), `organisatie` (heen, terug, verblijf, terPlekke, boekingen met deadline, actiepunten), `praktisch` (adres, noodnummers, contacten) en `wachtwoorden` (één per tegel: `bestemming`, `dag-1`, `dag-2`, …). Hoofdletters en spaties aan begin/eind tellen niet mee.
-- **`hints.json`** bevat een lijst `{ "datum": "JJJJ-MM-DD", "tekst": "…" }`. Een hint verschijnt vanaf zijn datum. Laat ze naar andere bestemmingen wijzen dan de echte.
-- **`lekwoorden.txt`** (optioneel) bevat één woord per regel dat nooit in de code mag staan. De lekcheck gebruikt deze lijst plus de plaatsnaam uit `content.json`.
+- **`content.json`** bevat `bestemming`, `dagen` (id, datum, titel, items, notitie), `organisatie` (heen, terug, verblijf, terPlekke, boekingen, actiepunten), `praktisch` (adres, noodnummers, contacten) en `wachtwoorden` (`bestemming`, `dag-1`, `dag-2`, …). Hoofdletters en spaties aan begin/eind tellen niet mee.
+- **`hints.json`** bevat een lijst `{ "datum": "JJJJ-MM-DD", "tekst": "…" }`. Hints staan niet versleuteld in de app en tonen vanaf hun datum. Ze zijn bedoeld als dwaalspoor; zet er niets echts in.
+- **`secret/codes.json`** wordt de eerste keer automatisch gemaakt, met het organisatorwachtwoord. Pas het gerust aan.
+- **`secret/lekwoorden.txt`** (optioneel) bevat woorden die nooit in de app mogen staan, voor de lekcheck.
 
-Draai daarna `npm run geheim:lokaal` en herstart `npm run worker`.
+Elke `npm run dev`, `build` of `deploy` versleutelt de inhoud opnieuw.
 
-## 3. Deployen naar Cloudflare (gratis)
-
-Eenmalig:
-
-```bash
-npx wrangler login
-npx wrangler kv namespace create DATA
-```
-
-Zet het id dat je terugkrijgt in `wrangler.toml` bij `VUL_HIER_HET_KV_ID_IN`. Zet de app daarna online en upload de geheimen:
+## 3. Online zetten (GitHub Pages)
 
 ```bash
 npm run deploy
-npm run geheim:upload
 ```
 
-Daarna is `npm run deploy` genoeg. Het draait eerst de lekcheck op de repo en de build. Pas je `content.json` of `hints.json` aan, dan volstaat `npm run geheim:upload`.
+Dit draait de lekcheck (repo, git-historie en build), bouwt de app en zet `dist/` op de branch `gh-pages`. De app staat dan op:
 
-Zet het adres van de app (bijv. `https://friends-on-tour-2027.<jouwnaam>.workers.dev`) in `.env` bij `VITE_SITE_URL` en deploy opnieuw. Dan krijgt een gedeelde link het neutrale voorbeeldplaatje.
+**https://qh6y22jbkb-debug.github.io/friends-on-tour-2027/**
+
+Eenmalig moet in GitHub *Settings → Pages* staan: *Deploy from branch → gh-pages / (root)*.
 
 **Installeren op de telefoon:** Safari → Deel → Zet op beginscherm (iPhone), of Chrome → ⋮ → App installeren (Android).
 
 ## 4. De onthulling testen
 
 - **Als organisator** zie je altijd alles. Zo controleer je de inhoud.
-- **Als deelnemer, met testmodus:** zet in `secret/codes.json` bijvoorbeeld `"testTijd": "2027-04-28T00:00:05+02:00"`. Draai dan `npm run geheim:lokaal` en herstart `npm run worker`. De lokale server doet nu alsof het die tijd is. Log in als deelnemer en open Bestemming en Praktisch. Probeer ook `2027-04-27T23:59:55+02:00` (alles moet dan dicht zijn) en maak `testTijd` daarna weer leeg. Online werkt de testmodus niet.
-- **Wachtwoord vergeten?** Een organisator kan via *Meer → Deelnemers* een wachtwoord resetten. De deelnemer maakt dan bij de volgende keer inloggen een nieuw wachtwoord aan, en oude sessies vervallen.
+- **Testmodus** (alleen lokaal): maak `.env.local` aan met `VITE_TEST_TIJD=2027-04-28T00:00:05+02:00` en start `npm run dev`. De app doet dan alsof het die tijd is. Kies een deelnemersnaam en open Bestemming met het bestemmingswachtwoord. Haal `.env.local` daarna weer weg. De testmodus gaat nooit mee in `npm run build`.
 
 ## Geen lekken
 
-Draai `npm run lekcheck` vóór elke commit. Hij doorzoekt de repo, de build en de git-historie. Zet de bestemming nooit in code, commit-berichten, bestandsnamen of branchnamen.
+Draai `npm run lekcheck` vóór elke commit (`deploy` doet het automatisch). Zet de bestemming nooit in code, commit-berichten, bestandsnamen of hints.

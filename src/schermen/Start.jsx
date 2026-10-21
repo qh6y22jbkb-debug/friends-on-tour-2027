@@ -1,16 +1,15 @@
-import { Backpack, CalendarDays, ClipboardList, LifeBuoy, Lightbulb, MapPin, Wallet } from 'lucide-react'
+import { Backpack, CalendarDays, ClipboardList, LifeBuoy, Lightbulb, MapPin } from 'lucide-react'
 import { TITEL } from '../config.js'
 import { resterend } from '../lib/tijd.js'
 import { Tegel } from '../ui.jsx'
 
-export default function Start({ nu, onthuld, isOrg, sessie, start, open, ontgrendeld, ga }) {
-  const dagen = start?.dagen ?? []
+export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrendeld, ga }) {
   let i = 0
   return (
     <>
       <header className="mb-6">
         <p className="text-sm font-medium text-accent">{TITEL}</p>
-        <h1 className="text-2xl font-semibold tracking-tight">Hoi {sessie.naam}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Hoi {naam}</h1>
       </header>
 
       <Aftelklok nu={nu} onthuld={onthuld} />
@@ -22,7 +21,7 @@ export default function Start({ nu, onthuld, isOrg, sessie, start, open, ontgren
           icoon={MapPin}
           titel="Bestemming"
           sub={onthuld || isOrg ? 'Bekijk waar we heen gaan' : 'Opent 28 april 2027'}
-          slot={!isOrg && !ontgrendeld.bestemming}
+          slot={!ontgrendeld.bestemming}
           onClick={() => open('bestemming', 'Bestemming')}
         />
         {dagen.map((d, n) => (
@@ -32,12 +31,11 @@ export default function Start({ nu, onthuld, isOrg, sessie, start, open, ontgren
             icoon={CalendarDays}
             titel={`Dag ${n + 1}`}
             sub={d.datum}
-            slot={!isOrg && !ontgrendeld[d.id]}
+            slot={!ontgrendeld[d.id]}
             onClick={() => open(d.id, `Dag ${n + 1} · ${d.datum}`)}
           />
         ))}
         <Tegel i={i++} icoon={Backpack} titel="Paklijst" sub="Afvinken" onClick={() => ga({ tab: 'paklijst', scherm: null })} />
-        <Tegel i={i++} icoon={Wallet} titel="Kosten" sub="Wie betaalde wat" onClick={() => ga({ scherm: { soort: 'kosten' } })} />
         {isOrg && (
           <Tegel
             i={i++}
@@ -52,7 +50,7 @@ export default function Start({ nu, onthuld, isOrg, sessie, start, open, ontgren
           icoon={LifeBuoy}
           titel="Praktisch"
           sub={onthuld || isOrg ? 'Adres en noodnummers' : 'Opent 28 april 2027'}
-          slot={!onthuld && !isOrg}
+          slot={!ontgrendeld.praktisch}
           onClick={() => open('praktisch', 'Praktisch')}
         />
         <Tegel
@@ -60,7 +58,7 @@ export default function Start({ nu, onthuld, isOrg, sessie, start, open, ontgren
           icoon={Lightbulb}
           titel="Hints"
           sub="Om de paar dagen een nieuwe"
-          breed={isOrg}
+          breed={!isOrg}
           onClick={() => ga({ scherm: { soort: 'hints' } })}
         />
       </div>

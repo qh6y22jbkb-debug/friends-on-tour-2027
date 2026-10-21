@@ -1,21 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { House, CalendarDays, ListChecks, Ellipsis } from 'lucide-react'
-import { api } from './lib/api.js'
+import { DEELNEMERS } from './config.js'
+import { dagen, ontgrendel } from './lib/kluis.js'
 import { lees, schrijf, wis } from './lib/opslag.js'
 import { heeftViewTransitions, overgang } from './lib/overgang.js'
-import { ONTHULLING_MS, syncTijd, useNu } from './lib/tijd.js'
+import { ONTHULLING_MS, useNu } from './lib/tijd.js'
 import { Fout, Knop, Sheet, Veld } from './ui.jsx'
-import Login from './schermen/Login.jsx'
+import Login, { OrganisatorSlot } from './schermen/Login.jsx'
 import Start from './schermen/Start.jsx'
 import Programma, { Dag } from './schermen/Programma.jsx'
 import Paklijst from './schermen/Paklijst.jsx'
 import Meer from './schermen/Meer.jsx'
 import Bestemming from './schermen/Bestemming.jsx'
-import Kosten from './schermen/Kosten.jsx'
 import Organisatie from './schermen/Organisatie.jsx'
 import Praktisch from './schermen/Praktisch.jsx'
 import Hints from './schermen/Hints.jsx'
-import Deelnemers from './schermen/Deelnemers.jsx'
 
 const TABS = [
   ['start', 'Start', House],
@@ -24,33 +23,19 @@ const TABS = [
   ['meer', 'Meer', Ellipsis],
 ]
 
+// Bestemming en Praktisch openen met hetzelfde wachtwoord.
+const SAMEN = { bestemming: 'praktisch', praktisch: 'bestemming' }
+
 export default function App() {
-  const [sessie, setSessie] = useState(() => lees('sessie'))
-  const [start, setStart] = useState(null)
+  const [naam, setNaam] = useState(() => lees('naam'))
+  const persoon = DEELNEMERS.find((d) => d.naam === naam)
+  const isOrg = persoon?.rol === 'organisator'
   const [nav, setNav] = useState({ tab: 'start', scherm: null })
-  // Ontgrendelde inhoud blijft alleen in het geheugen, nooit in localStorage.
+  // Ontgrendelde inhoud blijft alleen in het geheugen.
   const [ontgrendeld, setOntgrendeld] = useState({})
   const [slot, setSlot] = useState(null) // { id, titel, alleenMelding }
   const nu = useNu(1000)
   const onthuld = nu >= ONTHULLING_MS
-
-  useEffect(() => {
-    syncTijd()
-    const id = setInterval(syncTijd, 10 * 60 * 1000)
-    const uit = () => setSessie(null)
-    window.addEventListener('fot-uitgelogd', uit)
-    return () => {
-      clearInterval(id)
-      window.removeEventListener('fot-uitgelogd', uit)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (!sessie) return
-    api('start').then(setStart).catch(() => {})
-  }, [sessie, onthuld])
-
-  const isOrg = sessie?.rol === 'organisator'
 
   const ga = useCallback((wijziging) => {
     overgang(() => {
@@ -59,57 +44,56 @@ export default function App() {
     })
   }, [])
 
-  // Haalt de inhoud van een tegel op; vraagt zo nodig eerst een wachtwoord.
+  const naarTegel = useCallback(
+    (id) => ga({ scherm: id.startsWith('dag-') ? { soort: 'dag', id } : { soort: id } }),
+    [ga],
+  )
+
   const open = useCallback(
-    async (id, titel) => {
-      const naarScherm = () => ga({ scherm: id.startsWith('dag-') ? { soort: 'dag', id } : { soort: id } })
-      if (ontgrendeld[id]) return naarScherm()
-      const zonderWachtwoord = isOrg || id === 'praktisch'
-      const opTijd = id.startsWith('dag-') || onthuld || isOrg
-      if (!opTijd) return setSlot({ id, titel, alleenMelding: true })
-      if (!zonderWachtwoord) return setSlot({ id, titel })
-      try {
-        const { inhoud } = await api('tegel', { methode: 'POST', body: { id } })
-        setOntgrendeld((o) => ({ ...o, [id]: inhoud }))
-        naarScherm()
-      } catch (e) {
-        setSlot({ id, titel, alleenMelding: true, melding: e.message })
-      }
+    (id, titel) => {
+      if (ontgrendeld[id]) return naarTegel(id)
+      const opTijd = id.startsWith('dag-') || onthuld
+      setSlot({ id, titel, alleenMelding: !opTijd })
     },
-    [ontgrendeld, isOrg, onthuld, ga],
+    [ontgrendeld, onthuld, naarTegel],
   )
 
   function uitloggen() {
-    wis('sessie')
-    setSessie(null)
-    setStart(null)
+    wis('naam')
+    setNaam(null)
     setOntgrendeld({})
     setNav({ tab: 'start', scherm: null })
   }
 
-  if (!sessie) {
+  if (!persoon) {
     return (
       <Login
-        onIngelogd={(s) => {
-          schrijf('sessie', s)
-          overgang(() => setSessie(s))
+        onGekozen={(n, alles) => {
+          schrijf('naam', n)
+          overgang(() => {
+            setNaam(n)
+            if (alles) setOntgrendeld(alles)
+          })
         }}
       />
     )
   }
 
+  // Organisator na herladen: eerst opnieuw het organisatorwachtwoord.
+  if (isOrg && !ontgrendeld.organisatie) {
+    return <OrganisatorSlot naam={naam} onOpen={(alles) => overgang(() => setOntgrendeld(alles))} onAnders={uitloggen} />
+  }
+
   const terug = () => ga({ scherm: null })
-  const gedeeld = { nu, onthuld, isOrg, sessie, start, open, ontgrendeld, ga, terug }
+  const gedeeld = { nu, onthuld, isOrg, naam, dagen, open, ontgrendeld, ga, terug }
   const s = nav.scherm
 
   let inhoud
   if (s?.soort === 'bestemming') inhoud = <Bestemming {...gedeeld} inhoud={ontgrendeld.bestemming} />
   else if (s?.soort === 'dag') inhoud = <Dag {...gedeeld} dag={ontgrendeld[s.id]} />
   else if (s?.soort === 'praktisch') inhoud = <Praktisch {...gedeeld} inhoud={ontgrendeld.praktisch} />
-  else if (s?.soort === 'kosten') inhoud = <Kosten {...gedeeld} />
-  else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} />
+  else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} inhoud={ontgrendeld.organisatie} />
   else if (s?.soort === 'hints') inhoud = <Hints {...gedeeld} />
-  else if (s?.soort === 'deelnemers') inhoud = <Deelnemers {...gedeeld} />
   else if (nav.tab === 'start') inhoud = <Start {...gedeeld} />
   else if (nav.tab === 'programma') inhoud = <Programma {...gedeeld} />
   else if (nav.tab === 'paklijst') inhoud = <Paklijst {...gedeeld} />
@@ -125,32 +109,29 @@ export default function App() {
 
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-rand bg-vlak pb-[env(safe-area-inset-bottom)]">
         <div className="mx-auto flex max-w-md">
-          {TABS.map(([id, label, Icoon]) => {
-            const actief = nav.tab === id && !s
-            return (
-              <button
-                key={id}
-                onClick={() => ga({ tab: id, scherm: null })}
-                aria-current={actief ? 'page' : undefined}
-                className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${
-                  nav.tab === id ? 'text-accent' : 'text-tekst-zacht'
-                }`}
-              >
-                <Icoon size={22} strokeWidth={nav.tab === id ? 2 : 1.75} />
-                {label}
-              </button>
-            )
-          })}
+          {TABS.map(([id, label, Icoon]) => (
+            <button
+              key={id}
+              onClick={() => ga({ tab: id, scherm: null })}
+              aria-current={nav.tab === id && !s ? 'page' : undefined}
+              className={`flex min-h-14 flex-1 flex-col items-center justify-center gap-1 text-xs font-medium ${
+                nav.tab === id ? 'text-accent' : 'text-tekst-zacht'
+              }`}
+            >
+              <Icoon size={22} strokeWidth={nav.tab === id ? 2 : 1.75} />
+              {label}
+            </button>
+          ))}
         </div>
       </nav>
 
       <SlotSheet
         slot={slot}
         onSluit={() => setSlot(null)}
-        onOpen={(id, data) => {
-          setOntgrendeld((o) => ({ ...o, [id]: data }))
+        onOpen={(id, extra) => {
+          setOntgrendeld((o) => ({ ...o, ...extra }))
           setSlot(null)
-          ga({ scherm: id.startsWith('dag-') ? { soort: 'dag', id } : { soort: id } })
+          naarTegel(id)
         }}
       />
     </div>
@@ -175,8 +156,10 @@ function SlotSheet({ slot, onSluit, onOpen }) {
     setBezig(true)
     setFout('')
     try {
-      const { inhoud } = await api('tegel', { methode: 'POST', body: { id: slot.id, wachtwoord } })
-      onOpen(slot.id, inhoud)
+      const extra = { [slot.id]: await ontgrendel(slot.id, wachtwoord) }
+      const partner = SAMEN[slot.id]
+      if (partner) extra[partner] = await ontgrendel(partner, wachtwoord)
+      onOpen(slot.id, extra)
     } catch (err) {
       setFout(err.message)
       setSchud(false)
@@ -191,7 +174,7 @@ function SlotSheet({ slot, onSluit, onOpen }) {
     <Sheet open={!!slot} onSluit={onSluit} titel={slot?.titel}>
       {slot?.alleenMelding ? (
         <>
-          <p className="text-tekst-zacht">{slot.melding ?? 'Dit onderdeel opent op 28 april 2027 om 00:00.'}</p>
+          <p className="text-tekst-zacht">Dit onderdeel opent op 28 april 2027 om 00:00.</p>
           <Knop className="mt-6 w-full" variant="rand" onClick={onSluit}>
             Sluiten
           </Knop>
@@ -212,7 +195,7 @@ function SlotSheet({ slot, onSluit, onOpen }) {
           </div>
           <Fout>{fout}</Fout>
           <Knop className="mt-4 w-full" disabled={!wachtwoord || bezig}>
-            {bezig ? 'Controleren…' : 'Openen'}
+            {bezig ? 'Openen…' : 'Openen'}
           </Knop>
         </form>
       )}

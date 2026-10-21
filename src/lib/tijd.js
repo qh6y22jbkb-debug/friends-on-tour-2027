@@ -3,33 +3,16 @@ import { ONTHULLING_ISO } from '../config.js'
 
 export const ONTHULLING_MS = Date.parse(ONTHULLING_ISO)
 
-// Verschil tussen serverklok en telefoonklok; de aftelklok rekent met servertijd.
-let verschil = 0
-const luisteraars = new Set()
-
-export async function syncTijd() {
-  try {
-    const start = Date.now()
-    const { nu } = await fetch('/api/tijd', { cache: 'no-store' }).then((r) => r.json())
-    verschil = nu + (Date.now() - start) / 2 - Date.now()
-    luisteraars.forEach((f) => f())
-  } catch {
-    /* offline: voorlopig de eigen klok */
-  }
-}
-
-export const serverNu = () => Date.now() + verschil
+// Testmodus: alleen in `npm run dev`, via VITE_TEST_TIJD in .env.local. Gaat nooit mee in de build.
+const TEST = import.meta.env.DEV && import.meta.env.VITE_TEST_TIJD
+const verschuiving = TEST ? Date.parse(TEST) - Date.now() : 0
+const klok = () => Date.now() + verschuiving
 
 export function useNu(interval = 1000) {
-  const [nu, setNu] = useState(serverNu)
+  const [nu, setNu] = useState(klok)
   useEffect(() => {
-    const tik = () => setNu(serverNu())
-    const id = setInterval(tik, interval)
-    luisteraars.add(tik)
-    return () => {
-      clearInterval(id)
-      luisteraars.delete(tik)
-    }
+    const id = setInterval(() => setNu(klok()), interval)
+    return () => clearInterval(id)
   }, [interval])
   return nu
 }
@@ -42,6 +25,11 @@ export function resterend(nu) {
     uren: Math.floor((s % 86400) / 3600),
     minuten: Math.floor((s % 3600) / 60),
   }
+}
+
+// Datum (JJJJ-MM-DD) in Amsterdamse tijd, voor hints die per dag openen.
+export function datumAmsterdam(ms) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date(ms))
 }
 
 export function mooieDatum(iso) {

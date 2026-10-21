@@ -1,19 +1,18 @@
 import { CalendarDays, CircleAlert, Lock } from 'lucide-react'
-import { Blok, Kop, Laden, Rij } from '../ui.jsx'
+import { Blok, Kop, Rij } from '../ui.jsx'
 
-export default function Programma({ start, isOrg, ontgrendeld, open }) {
-  if (!start) return <Laden />
+export default function Programma({ dagen, ontgrendeld, open }) {
   return (
     <>
       <Kop titel="Programma" sub="Elke dag gaat open met een eigen wachtwoord." />
       <Blok>
-        {start.dagen.map((d, i) => {
+        {dagen.map((d, i) => {
           const dag = ontgrendeld[d.id]
           return (
             <Rij
               key={d.id}
               i={i}
-              icoon={dag || isOrg ? CalendarDays : Lock}
+              icoon={dag ? CalendarDays : Lock}
               titel={`Dag ${i + 1}`}
               sub={dag ? `${d.datum} · ${dag.titel}` : d.datum}
               onClick={() => open(d.id, `Dag ${i + 1} · ${d.datum}`)}

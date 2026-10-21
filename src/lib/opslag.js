@@ -1,4 +1,4 @@
-// Kleine wrapper om localStorage. Bewaart alleen de sessie, nooit geheime inhoud.
+// Kleine wrapper om localStorage: alleen je naam en vinkjes, nooit geheime inhoud.
 const PREFIX = 'fot:'
 
 export function lees(sleutel, standaard = null) {

@@ -1,35 +1,26 @@
-import { useEffect, useState } from 'react'
-import { api } from '../lib/api.js'
+import { useState } from 'react'
+import { lees, schrijf } from '../lib/opslag.js'
 import { mooieDatum } from '../lib/tijd.js'
-import { Blok, Fout, Kop, Laden, Link, Regels, Teller, Vinkrij, Voortgang } from '../ui.jsx'
+import { Blok, Kop, Link, Regels, Teller, Vinkrij, Voortgang } from '../ui.jsx'
 
-export default function Organisatie({ terug }) {
-  const [data, setData] = useState(null)
-  const [fout, setFout] = useState('')
+export default function Organisatie({ inhoud, terug }) {
+  const [klaarSet, setKlaarSet] = useState(() => new Set(lees('organisatie-klaar', [])))
+  if (!inhoud) return <Kop titel="Niet geopend" terug={terug} />
 
-  useEffect(() => {
-    api('organisatie').then(setData).catch((e) => setFout(e.message))
-  }, [])
-
-  async function wissel(id) {
-    const klaar = !data.status[id]
-    try {
-      setData(await api('organisatie', { methode: 'POST', body: { id, klaar } }))
-    } catch (e) {
-      setFout(e.message)
-    }
+  function wissel(id) {
+    const nieuw = new Set(klaarSet)
+    nieuw.has(id) ? nieuw.delete(id) : nieuw.add(id)
+    setKlaarSet(nieuw)
+    schrijf('organisatie-klaar', [...nieuw])
   }
 
-  if (!data) return fout ? <Fout>{fout}</Fout> : <Laden />
-  const { inhoud, status } = data
   const punten = [...(inhoud.boekingen ?? []), ...(inhoud.actiepunten ?? [])]
-  const klaar = punten.filter((p) => status[p.id]).length
-  const door = (id) => (status[id] ? ` · afgevinkt door ${status[id].door}` : '')
+  const klaar = punten.filter((p) => klaarSet.has(p.id)).length
   let i = 0
 
   return (
     <>
-      <Kop titel="Organisatie" sub="Alleen zichtbaar voor organisatoren." terug={terug} />
+      <Kop titel="Organisatie" sub="Alleen voor organisatoren. Afvinken wordt op deze telefoon onthouden." terug={terug} />
 
       <div className="mb-6 rounded-xl border border-rand bg-vlak p-4">
         <p className="mb-2 text-sm">
@@ -37,7 +28,6 @@ export default function Organisatie({ terug }) {
         </p>
         <Voortgang waarde={klaar} totaal={punten.length} />
       </div>
-      <Fout>{fout}</Fout>
 
       {inhoud.boekingen?.length > 0 && (
         <Blok titel="Boekingen">
@@ -46,10 +36,10 @@ export default function Organisatie({ terug }) {
               <div className="flex-1">
                 <Vinkrij
                   i={i++}
-                  aan={!!status[b.id]}
+                  aan={klaarSet.has(b.id)}
                   onWissel={() => wissel(b.id)}
                   titel={b.wat}
-                  sub={`Deadline: ${mooieDatum(b.deadline)}${door(b.id)}`}
+                  sub={`Deadline: ${mooieDatum(b.deadline)}`}
                 />
               </div>
               {b.link && (
@@ -65,14 +55,7 @@ export default function Organisatie({ terug }) {
       {inhoud.actiepunten?.length > 0 && (
         <Blok titel="Actiepunten">
           {inhoud.actiepunten.map((a) => (
-            <Vinkrij
-              key={a.id}
-              i={i++}
-              aan={!!status[a.id]}
-              onWissel={() => wissel(a.id)}
-              titel={a.tekst}
-              sub={[a.wanneer, door(a.id).replace(/^ · /, '')].filter(Boolean).join(' · ')}
-            />
+            <Vinkrij key={a.id} i={i++} aan={klaarSet.has(a.id)} onWissel={() => wissel(a.id)} titel={a.tekst} sub={a.wanneer} />
           ))}
         </Blok>
       )}
