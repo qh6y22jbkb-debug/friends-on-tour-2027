@@ -31,6 +31,10 @@ export default defineConfig({
           { src: 'icoon-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
+      workbox: {
+        // Ook de profielfoto's en iconen offline beschikbaar maken.
+        globPatterns: ['**/*.{js,css,html,svg,png,webp}'],
+      },
     }),
   ],
 })

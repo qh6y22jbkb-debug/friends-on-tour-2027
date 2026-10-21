@@ -1,7 +1,7 @@
 import { Backpack, ClipboardList, LifeBuoy, Lightbulb, Lock } from 'lucide-react'
 import { TITEL } from '../config.js'
 import { dagInfo, datumAmsterdam, resterend } from '../lib/tijd.js'
-import { Sectiekop, Tegel } from '../ui.jsx'
+import { Avatar, Sectiekop, Tegel } from '../ui.jsx'
 
 export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrendeld, ga }) {
   let i = 0
@@ -13,12 +13,7 @@ export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrende
           <p className="text-sm font-medium text-tekst-zacht">{TITEL}</p>
           <h1 className="text-[32px] leading-tight font-bold tracking-tight">Hoi {naam}</h1>
         </div>
-        <span
-          aria-hidden="true"
-          className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-accent text-xl font-bold text-op-accent"
-        >
-          {naam[0]}
-        </span>
+        <Avatar naam={naam} maat={56} />
       </header>
 
       {/* Reisdagen als rij rondjes; vandaag krijgt de accentkleur. */}

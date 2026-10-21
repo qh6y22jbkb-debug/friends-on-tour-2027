@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, ExternalLink, Lock } from 'lucide-react'
+import { persoon } from './config.js'
 import { minderBeweging } from './lib/overgang.js'
 
 /* ---------- Schermopbouw ---------- */
@@ -47,6 +48,37 @@ export function Blok({ titel, children, actie }) {
       {(titel || actie) && <Sectiekop titel={titel} actie={actie} />}
       <div className="overflow-hidden rounded-[28px] bg-vlak">{children}</div>
     </section>
+  )
+}
+
+// Profielfoto in een rondje; zonder foto (of als hij niet laadt) de eerste letter.
+export function Avatar({ naam, maat = 40, className = '' }) {
+  const [mislukt, setMislukt] = useState(false)
+  const foto = persoon(naam)?.foto
+  const stijl = { width: maat, height: maat }
+  if (foto && !mislukt) {
+    return (
+      <img
+        src={import.meta.env.BASE_URL + foto}
+        alt=""
+        aria-hidden="true"
+        width={maat}
+        height={maat}
+        loading="lazy"
+        onError={() => setMislukt(true)}
+        style={stijl}
+        className={`shrink-0 rounded-full bg-vlak-zacht object-cover ${className}`}
+      />
+    )
+  }
+  return (
+    <span
+      aria-hidden="true"
+      style={{ ...stijl, fontSize: maat * 0.4 }}
+      className={`flex shrink-0 items-center justify-center rounded-full bg-accent font-bold text-op-accent ${className}`}
+    >
+      {naam?.[0]}
+    </span>
   )
 }
 

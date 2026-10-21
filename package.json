@@ -9,7 +9,8 @@
     "preview": "vite preview --port 4180 --strictPort",
     "iconen": "node scripts/iconen.mjs",
     "lekcheck": "node scripts/lekcheck.mjs",
-    "deploy": "npm run lekcheck && npm run build && npm run lekcheck -- --alleen-dist && gh-pages -d dist -t"
+    "deploy": "npm run lekcheck && npm run build && npm run lekcheck -- --alleen-dist && gh-pages -d dist -t",
+    "profielfotos": "node scripts/profielfotos.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.55.0",

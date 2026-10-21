@@ -15,3 +15,6 @@ secret/*
 
 # Ontwerp-voorbeelden (niet publiceren)
 Scherm*afbeelding*
+
+# Originele profielfoto's (alleen de uitsneden in public/profiel gaan mee)
+Profielfoto's/

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { DEELNEMERS, TITEL } from '../config.js'
 import { ontgrendelAlles } from '../lib/kluis.js'
 import { overgang } from '../lib/overgang.js'
-import { Blok, Fout, Knop, Kop, Rij, Rondje, Veld } from '../ui.jsx'
+import { Avatar, Blok, Fout, Knop, Kop, Rij, Veld } from '../ui.jsx'
 
 export default function Login({ onGekozen }) {
   const [org, setOrg] = useState(null)
@@ -22,7 +22,7 @@ export default function Login({ onGekozen }) {
               <Rij
                 key={d.naam}
                 i={i}
-                voor={<Rondje className="font-bold">{d.naam[0]}</Rondje>}
+                voor={<Avatar naam={d.naam} maat={44} />}
                 titel={d.naam}
                 sub={d.rol === 'organisator' ? 'Organisator' : null}
                 onClick={() => kies(d)}
@@ -85,6 +85,7 @@ function OrganisatorFormulier({ naam, terug, onOpen }) {
 
   return (
     <form onSubmit={versturen}>
+      <Avatar naam={naam} maat={72} className="mb-4" />
       <Kop titel={`Hoi ${naam}`} sub="Vul het organisatorwachtwoord in. Dat opent alles." terug={terug} />
       <div className={schud ? 'schud' : ''} onAnimationEnd={() => setSchud(false)}>
         <Veld

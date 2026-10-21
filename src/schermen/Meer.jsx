@@ -1,11 +1,18 @@
 import { ClipboardList, LifeBuoy, Lightbulb, LogOut, MapPin } from 'lucide-react'
-import { Blok, Kop, Rij } from '../ui.jsx'
+import { Avatar, Blok, Kop, Rij } from '../ui.jsx'
 
 export default function Meer({ naam, isOrg, onthuld, open, ga, onUitloggen }) {
   let i = 0
   return (
     <>
-      <Kop titel="Meer" sub={`Ingelogd als ${naam}${isOrg ? ' · organisator' : ''}`} />
+      <Kop titel="Meer" />
+      <div className="mb-6 flex items-center gap-4 rounded-[28px] bg-vlak p-5">
+        <Avatar naam={naam} maat={64} />
+        <div>
+          <p className="text-xl font-bold">{naam}</p>
+          <p className="text-tekst-zacht">{isOrg ? 'Organisator' : 'Deelnemer'}</p>
+        </div>
+      </div>
       <Blok>
         {isOrg && (
           <Rij i={i++} icoon={ClipboardList} titel="Organisatie" onClick={() => ga({ scherm: { soort: 'organisatie' } })} />
