@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.DS_Store
+
+# Gegenereerd uit de geheime inhoud (versleuteld, maar hoort niet in de broncode)
+src/kluis.json
+
+# Alles wat geheim is blijft lokaal
+secret/*
+!secret/content.example.json
+!secret/hints.example.json
+
+# Lokale testmodus
+.env.local
