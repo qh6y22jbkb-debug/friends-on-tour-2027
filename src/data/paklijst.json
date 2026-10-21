@@ -16,10 +16,6 @@
         "tekst": "Wat contant geld"
       },
       {
-        "id": "doc-verzekering",
-        "tekst": "Gegevens reisverzekering"
-      },
-      {
         "id": "doc-zorgpas",
         "tekst": "Zorgpas"
       }
@@ -44,10 +40,6 @@
       {
         "id": "kl-ondergoed",
         "tekst": "Ondergoed en sokken"
-      },
-      {
-        "id": "kl-net",
-        "tekst": "Nette outfit voor een avond uit"
       },
       {
         "id": "kl-slapen",
@@ -129,7 +121,7 @@
       },
       {
         "id": "ov-spel",
-        "tekst": "Kaartspel"
+        "tekst": "Spelletjes"
       },
       {
         "id": "ov-snacks",
