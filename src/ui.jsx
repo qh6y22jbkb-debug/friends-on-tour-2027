@@ -144,9 +144,9 @@ export function Link({ href, children = 'Openen' }) {
 }
 
 // Klein wit labeltje, zoals "Personal" in het ontwerp.
-export function Chip({ children, slot }) {
+export function Chip({ children, slot, className = 'bg-vlak' }) {
   return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-vlak px-3 py-1 text-xs font-semibold whitespace-nowrap">
+    <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold whitespace-nowrap ${className}`}>
       {slot && <Lock size={12} strokeWidth={2.25} />}
       {children}
     </span>

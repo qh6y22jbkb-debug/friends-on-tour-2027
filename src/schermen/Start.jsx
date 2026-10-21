@@ -82,7 +82,7 @@ export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrende
           tint="lila"
           icoon={LifeBuoy}
           titel="Praktisch"
-          sub="Adres en noodnummers"
+          sub="Adres en contactpersonen"
           voet={ontgrendeld.praktisch ? '' : 'Met wachtwoord'}
           slot={!ontgrendeld.praktisch}
           onClick={() => open('praktisch', 'Praktisch')}

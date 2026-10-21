@@ -1,4 +1,4 @@
-import { MapPin, Phone, User } from 'lucide-react'
+import { MapPin, User } from 'lucide-react'
 import { persoon } from '../config.js'
 import { Avatar, Blok, Kop, Rij } from '../ui.jsx'
 
@@ -6,7 +6,7 @@ const bel = (nummer) => `tel:${String(nummer).replace(/[^\d+]/g, '')}`
 
 export default function Praktisch({ inhoud, terug }) {
   if (!inhoud) return <Kop titel="Niet geopend" terug={terug} />
-  const { adres, noodnummers = [], contacten = [] } = inhoud
+  const { adres, contacten = [] } = inhoud
   let i = 0
   return (
     <>
@@ -23,19 +23,6 @@ export default function Praktisch({ inhoud, terug }) {
           </a>
         </Blok>
       )}
-      <Blok titel="Noodnummers">
-        {noodnummers.map((n) => (
-          <a key={n.nummer} href={bel(n.nummer)} className="block">
-            <Rij
-              i={i++}
-              icoon={Phone}
-              titel={n.label}
-              rechts={<span className="rounded-full bg-accent px-3 py-1 font-semibold text-op-accent tabular-nums">{n.nummer}</span>}
-              pijl={false}
-            />
-          </a>
-        ))}
-      </Blok>
       <Blok titel="Contactpersonen">
         {contacten.map((c) => {
           const rij = (

@@ -1,10 +1,15 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { hints, leesHint } from '../lib/kluis.js'
 import { lees, schrijf } from '../lib/opslag.js'
-import { mooieDatum } from '../lib/tijd.js'
-import { Blok, Kop, Link, Regels, Teller, Vinkrij, Voortgang } from '../ui.jsx'
+import { datumAmsterdam, mooieDatum } from '../lib/tijd.js'
+import { Blok, Chip, Kop, Link, Regels, Teller, Vinkrij, Voortgang } from '../ui.jsx'
 
-export default function Organisatie({ inhoud, missies, terug }) {
+export default function Organisatie({ inhoud, missies, nu, terug }) {
   const [klaarSet, setKlaarSet] = useState(() => new Set(lees('organisatie-klaar', [])))
+  const [hintTeksten, setHintTeksten] = useState({})
+  useEffect(() => {
+    Promise.all(hints.map(async (h) => [h.i, await leesHint(h.i)])).then((paren) => setHintTeksten(Object.fromEntries(paren)))
+  }, [])
   if (!inhoud) return <Kop titel="Niet geopend" terug={terug} />
 
   function wissel(id) {
@@ -60,8 +65,29 @@ export default function Organisatie({ inhoud, missies, terug }) {
         </Blok>
       )}
 
+      {hints.length > 0 && (
+        <Blok titel="Uitgezette hints">
+          {hints.map((h, n) => {
+            const open = h.datum <= datumAmsterdam(nu)
+            return (
+              <div key={h.i} style={{ '--i': i++ }} className="opkomen flex items-start gap-3 border-b border-rand px-5 py-3.5 last:border-b-0">
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-tekst-zacht">
+                    Schatkist {n + 1} · {mooieDatum(h.datum)}
+                  </p>
+                  <p className="font-medium">{hintTeksten[h.i] ?? '…'}</p>
+                </div>
+                <Chip slot={!open} className={open ? 'bg-accent text-op-accent' : 'bg-vlak-zacht'}>
+                  {open ? 'Open' : 'Dicht'}
+                </Chip>
+              </div>
+            )
+          })}
+        </Blok>
+      )}
+
       {missies && Object.keys(missies).length > 0 && (
-        <Blok titel="Missies">
+        <Blok titel="Uitgezette opdrachten">
           {Object.entries(missies).map(([wie, m]) => (
             <Vinkrij
               key={wie}

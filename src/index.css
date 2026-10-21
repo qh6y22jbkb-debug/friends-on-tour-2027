@@ -101,7 +101,7 @@ body {
 /* Gespreide fade-up voor tegels en lijstitems (--i = volgnummer) */
 .opkomen {
   animation: opkomen 320ms var(--uit) both;
-  animation-delay: calc(var(--i, 0) * 30ms);
+  animation-delay: calc(min(var(--i, 0), 10) * 30ms);
 }
 @keyframes opkomen {
   from { opacity: 0; transform: translateY(8px); }
