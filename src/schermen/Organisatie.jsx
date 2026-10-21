@@ -60,6 +60,12 @@ export default function Organisatie({ inhoud, terug }) {
         </Blok>
       )}
 
+      {inhoud.kosten?.length > 0 && (
+        <Blok titel="Kosten">
+          <Regels regels={inhoud.kosten} />
+        </Blok>
+      )}
+
       {inhoud.heen?.length > 0 && (
         <Blok titel="Heenreis">
           <Regels regels={inhoud.heen} />
@@ -76,7 +82,7 @@ export default function Organisatie({ inhoud, terug }) {
         </Blok>
       )}
       {inhoud.terPlekke?.length > 0 && (
-        <Blok titel="Vervoer ter plekke">
+        <Blok titel="Ter plekke">
           <Regels regels={inhoud.terPlekke} />
         </Blok>
       )}

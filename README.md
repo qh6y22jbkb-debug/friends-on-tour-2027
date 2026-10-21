@@ -42,7 +42,7 @@ cp secret/content.example.json secret/content.json
 cp secret/hints.example.json secret/hints.json
 ```
 
-- **`content.json`** bevat `bestemming`, `dagen` (id, datum, titel, items, notitie), `organisatie` (heen, terug, verblijf, terPlekke, boekingen, actiepunten), `praktisch` (adres, noodnummers, contacten) en `wachtwoorden` (`bestemming`, `dag-1`, `dag-2`, …). Hoofdletters en spaties aan begin/eind tellen niet mee.
+- **`content.json`** bevat `bestemming`, `dagen` (id, datum, titel, items, notitie), `organisatie` (heen, terug, verblijf, terPlekke, kosten, boekingen, actiepunten), `praktisch` (adres, noodnummers, contacten) en `wachtwoorden` (`bestemming`, `dag-1`, `dag-2`, …). Hoofdletters en spaties aan begin/eind tellen niet mee.
 - **`hints.json`** bevat een lijst `{ "datum": "JJJJ-MM-DD", "tekst": "…" }`. Hints staan niet versleuteld in de app en tonen vanaf hun datum. Ze zijn bedoeld als dwaalspoor; zet er niets echts in.
 - **`secret/codes.json`** wordt de eerste keer automatisch gemaakt, met het organisatorwachtwoord. Voeg hier ook `deelnemerWachtwoorden` toe, bijvoorbeeld `{ "Tico": "…" }`. Hoofdletters en spaties aan begin/eind tellen niet mee.
 - **`secret/lekwoorden.txt`** (optioneel) bevat woorden die nooit in de app mogen staan, voor de lekcheck.
