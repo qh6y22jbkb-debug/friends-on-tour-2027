@@ -98,7 +98,7 @@ export default function App() {
   let inhoud
   if (s?.soort === 'bestemming') inhoud = <Bestemming {...gedeeld} inhoud={ontgrendeld.bestemming} />
   else if (s?.soort === 'dag') inhoud = <Dag {...gedeeld} dag={ontgrendeld[s.id]} />
-  else if (s?.soort === 'praktisch') inhoud = <Praktisch {...gedeeld} inhoud={ontgrendeld.praktisch} />
+  else if (s?.soort === 'praktisch') inhoud = <Praktisch {...gedeeld} inhoud={ontgrendeld.praktisch} missies={isOrg ? ontgrendeld.missies : null} />
   else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} inhoud={ontgrendeld.organisatie} missies={ontgrendeld.missies} />
   else if (s?.soort === 'hints') inhoud = <Hints {...gedeeld} />
   else if (nav.tab === 'start') inhoud = <Start {...gedeeld} />
