@@ -15,6 +15,7 @@ import Bestemming from './schermen/Bestemming.jsx'
 import Organisatie from './schermen/Organisatie.jsx'
 import Praktisch from './schermen/Praktisch.jsx'
 import Hints from './schermen/Hints.jsx'
+import Spel from './schermen/Spel.jsx'
 
 const TABS = [
   ['start', 'Start', House],
@@ -101,6 +102,7 @@ export default function App() {
   else if (s?.soort === 'praktisch') inhoud = <Praktisch {...gedeeld} inhoud={ontgrendeld.praktisch} missies={isOrg ? ontgrendeld.missies : null} />
   else if (s?.soort === 'organisatie') inhoud = <Organisatie {...gedeeld} inhoud={ontgrendeld.organisatie} missies={ontgrendeld.missies} />
   else if (s?.soort === 'hints') inhoud = <Hints {...gedeeld} />
+  else if (s?.soort === 'spel') inhoud = <Spel {...gedeeld} />
   else if (nav.tab === 'start') inhoud = <Start {...gedeeld} />
   else if (nav.tab === 'programma') inhoud = <Programma {...gedeeld} />
   else if (nav.tab === 'paklijst') inhoud = <Paklijst {...gedeeld} />

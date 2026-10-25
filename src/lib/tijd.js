@@ -6,7 +6,7 @@ export const ONTHULLING_MS = Date.parse(ONTHULLING_ISO)
 // Testmodus: alleen in `npm run dev`, via VITE_TEST_TIJD in .env.local. Gaat nooit mee in de build.
 const TEST = import.meta.env.DEV && import.meta.env.VITE_TEST_TIJD
 const verschuiving = TEST ? Date.parse(TEST) - Date.now() : 0
-const klok = () => Date.now() + verschuiving
+export const klok = () => Date.now() + verschuiving
 
 export function useNu(interval = 1000) {
   const [nu, setNu] = useState(klok)

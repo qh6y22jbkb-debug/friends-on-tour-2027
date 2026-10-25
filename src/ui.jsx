@@ -160,6 +160,7 @@ const TINTEN = {
   lila: 'bg-tint-lila',
   salie: 'bg-tint-salie',
   zand: 'bg-tint-zand',
+  geel: 'bg-accent-zacht',
   wit: 'bg-vlak',
 }
 
@@ -177,7 +178,7 @@ export function Tegel({ icoon: Icoon, titel, sub, voet, slot, onClick, i = 0, br
       <span className="mt-3 font-semibold">{titel}</span>
       {sub && <span className="text-sm leading-snug text-tekst-zacht">{sub}</span>}
       <span className="mt-auto flex w-full items-center justify-between gap-2 pt-3">
-        <span className="text-xs whitespace-nowrap text-tekst-zacht">{voet}</span>
+        <span className="min-w-0 truncate text-xs text-tekst-zacht">{voet}</span>
         <Chip slot={slot}>{slot ? 'Op slot' : 'Open'}</Chip>
       </span>
     </button>

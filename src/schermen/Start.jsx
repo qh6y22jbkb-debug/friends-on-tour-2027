@@ -1,4 +1,4 @@
-import { Backpack, ClipboardList, Gem, LifeBuoy, Lock } from 'lucide-react'
+import { Backpack, ClipboardList, Gamepad2, Gem, LifeBuoy, Lock } from 'lucide-react'
 import { TITEL } from '../config.js'
 import { dagInfo, datumAmsterdam, resterend } from '../lib/tijd.js'
 import { Avatar, Sectiekop, Tegel } from '../ui.jsx'
@@ -83,7 +83,7 @@ export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrende
           icoon={LifeBuoy}
           titel="Praktisch"
           sub="Adres en contactpersonen"
-          voet={ontgrendeld.praktisch ? '' : 'Met wachtwoord'}
+          voet=""
           slot={!ontgrendeld.praktisch}
           onClick={() => open('praktisch', 'Praktisch')}
         />
@@ -105,8 +105,17 @@ export default function Start({ nu, onthuld, isOrg, naam, dagen, open, ontgrende
           titel="Schatkisten"
           sub="3 hints, elk op een eigen datum"
           voet="Altijd"
-          breed={!isOrg}
           onClick={() => ga({ scherm: { soort: 'hints' } })}
+        />
+        <Tegel
+          i={i++}
+          tint="geel"
+          icoon={Gamepad2}
+          titel="Vliegende koffer"
+          sub="Spaar punten voor een schatkist"
+          voet="Max 50 per dag"
+          breed={isOrg}
+          onClick={() => ga({ scherm: { soort: 'spel' } })}
         />
       </div>
     </>

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { hints, leesHint } from '../lib/kluis.js'
 import { lees, schrijf } from '../lib/opslag.js'
 import { datumAmsterdam, mooieDatum } from '../lib/tijd.js'
-import { Kop } from '../ui.jsx'
+import { PRIJS, gekocht, koopKist, stand } from '../lib/munten.js'
+import { Knop, Kop } from '../ui.jsx'
 
 const HOUT = '#7a4b3a'
 const HOUT_DONKER = '#5e3729'
@@ -13,29 +14,67 @@ function dagenTot(vandaag, datum) {
   return Math.round((Date.parse(datum + 'T12:00:00Z') - Date.parse(vandaag + 'T12:00:00Z')) / 86400000)
 }
 
-export default function Hints({ nu, naam, isOrg, terug }) {
+export default function Hints({ nu, naam, isOrg, terug, ga }) {
   const vandaag = datumAmsterdam(nu)
+  const [pot, setPot] = useState(() => stand(naam))
+  const [lijst, setLijst] = useState(() => gekocht(naam))
+
+  function koop(datum) {
+    if (koopKist(naam, datum)) {
+      setPot(stand(naam))
+      setLijst(gekocht(naam))
+    }
+  }
+
   return (
     <>
       <Kop
         titel="Schatkisten"
-        sub={isOrg ? 'Jij kunt alles al zien. De anderen krijgen elke kist pas op zijn datum.' : 'Elke kist gaat open op zijn eigen datum.'}
+        sub={
+          isOrg
+            ? 'Jij kunt alles al zien. De anderen krijgen elke kist op zijn datum, of eerder met punten.'
+            : `Elke kist gaat open op zijn eigen datum. Of koop er eerder een voor ${PRIJS} punten.`
+        }
         terug={terug}
       />
+      {!isOrg && (
+        <div className="mb-4 flex items-center gap-4 rounded-[28px] bg-vlak p-5">
+          <div className="flex-1">
+            <p className="text-sm text-tekst-zacht">Jouw spaarpot</p>
+            <p className="text-2xl font-extrabold tabular-nums">
+              {pot.bank}
+              <span className="text-base font-semibold text-tekst-zacht">/{PRIJS} punten</span>
+            </p>
+          </div>
+          <Knop className="min-h-12 px-5" onClick={() => ga({ scherm: { soort: 'spel' } })}>
+            Spelen
+          </Knop>
+        </div>
+      )}
       <div className="space-y-4">
         {hints.map((h, n) => (
-          <Kist key={h.i} hint={h} nummer={n + 1} vandaag={vandaag} naam={naam} isOrg={isOrg} />
+          <Kist
+            key={h.i + (lijst.includes(h.datum) ? '-gekocht' : '')}
+            hint={h}
+            nummer={n + 1}
+            vandaag={vandaag}
+            naam={naam}
+            isOrg={isOrg}
+            isGekocht={lijst.includes(h.datum)}
+            kanKopen={pot.bank >= PRIJS}
+            onKoop={() => koop(h.datum)}
+          />
         ))}
       </div>
     </>
   )
 }
 
-function Kist({ hint, nummer, vandaag, naam, isOrg }) {
+function Kist({ hint, nummer, vandaag, naam, isOrg, isGekocht, kanKopen, onKoop }) {
   const opTijd = hint.datum <= vandaag
-  const mag = opTijd || isOrg
+  const mag = opTijd || isOrg || isGekocht
   const sleutel = `kist-${naam}-${hint.datum}`
-  const [open, setOpen] = useState(() => isOrg || (opTijd && lees(sleutel, false)))
+  const [open, setOpen] = useState(() => isOrg || (mag && lees(sleutel, false)))
   const [tekst, setTekst] = useState(null)
   const [schud, setSchud] = useState(false)
 
@@ -62,7 +101,9 @@ function Kist({ hint, nummer, vandaag, naam, isOrg }) {
       ? 'Het slot is eraf. Tik om te openen!'
       : isOrg && !opTijd
         ? `Voor de anderen dicht tot ${mooieDatum(hint.datum)}`
-        : `Geopend · ${mooieDatum(hint.datum)}`
+        : isGekocht && !opTijd
+          ? 'Gekocht met punten'
+          : `Geopend · ${mooieDatum(hint.datum)}`
 
   return (
     <section style={{ '--i': nummer - 1 }} className="opkomen rounded-[28px] bg-vlak p-5">
@@ -83,6 +124,12 @@ function Kist({ hint, nummer, vandaag, naam, isOrg }) {
       </button>
 
       <p className="mt-2 text-center text-sm text-tekst-zacht">{status}</p>
+
+      {!mag && kanKopen && (
+        <Knop className="mt-4 w-full" onClick={onKoop}>
+          Kopen voor {PRIJS} punten
+        </Knop>
+      )}
 
       {open && mag && (
         <div className="opkomen mt-4 rounded-[20px] bg-accent-zacht px-5 py-4 text-center text-lg font-semibold">

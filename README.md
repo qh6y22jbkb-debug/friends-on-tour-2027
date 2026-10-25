@@ -17,7 +17,8 @@ Installeerbare web-app (PWA) voor het vriendenweekend. Hij draait zonder server,
 | Bestemming + Praktisch | bestemmingswachtwoord (geen datum; wie het heeft, kan het openen) |
 | Dag 1–4 | eerst het bestemmingswachtwoord, dán het eigen dagwachtwoord (versleuteld met beide samen) |
 | Organisatie | alleen organisatorwachtwoord |
-| Schatkisten (hints) | elk op een eigen datum; organisatoren zien ze altijd |
+| Schatkisten (hints) | elk op een eigen datum, of eerder te kopen met 500 punten uit het spel; organisatoren zien ze altijd |
+| Vliegende koffer (spel) | altijd; max 50 punten per dag, bij 500 punten één schatkist naar keuze, daarna weer 0 (punten staan op de eigen telefoon) |
 | Paklijst | altijd open |
 
 Deelnemers loggen in met hun eigen wachtwoord (`deelnemerWachtwoorden` in `secret/codes.json`); daarna onthoudt hun telefoon wie ze zijn. In de app staat alleen een hash (PBKDF2 met salt), nooit het wachtwoord zelf. Het inlogwachtwoord voorkomt dat iemand als een ander inlogt; het opent zelf geen geheime inhoud. Organisatoren (in `src/config.js`) vullen na het kiezen van hun naam het organisatorwachtwoord in. Dat opent alles. Ontgrendelde inhoud wordt nergens bewaard: na herladen vul je het opnieuw in. Alleen je naam en je vinkjes (paklijst, organisatie) onthoudt de app, op je eigen telefoon.
